@@ -19,6 +19,11 @@ export class Renderer {
     this.config = config;
     this.theme = theme;
 
+    // Accent color for highlights (amber)
+    this.accentColor = config.get('outsynth.accent_color', '#f5a623');
+    // Flash map: keyed by "lane:position", value = performance.now() timestamp
+    this.recentHits = new Map();
+
     this.width = window.innerWidth;
     this.height = window.innerHeight;
 
@@ -26,10 +31,6 @@ export class Renderer {
     this.particles = [];
     this.hitWaves = [];
     this.dropEffects = [];
-
-    // Stars for background
-    this.stars = [];
-    this.initStars();
   }
 
   resize(w, h, dpr = 1) {
@@ -44,83 +45,15 @@ export class Renderer {
       ctx.scale(dpr, dpr);
     });
 
-    this.initStars();
     this.drawStaticBackground();
-  }
-
-  initStars() {
-    this.stars = [];
-    const count = Math.floor((this.width * this.height) / 12000);
-    for (let i = 0; i < count; i++) {
-      this.stars.push({
-        x: Math.random() * this.width,
-        y: Math.random() * (this.height * 0.46),
-        size: Math.random() * 1.6 + 0.4,
-        brightness: Math.random() * 0.7 + 0.3,
-        speed: Math.random() * 1.5 + 0.5,
-      });
-    }
   }
 
   drawStaticBackground() {
     const ctx = this.bgCtx;
     const w = this.width;
     const h = this.height;
-    const sky = this.theme.sky();
-    const horizonY = h * 0.44;
-
-    // Rich cosmic sky gradient
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
-    skyGrad.addColorStop(0, sky.top || '#060612');
-    skyGrad.addColorStop(0.65, sky.bottom || '#0e1026');
-    skyGrad.addColorStop(1, '#1b1b38');
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, w, horizonY + 2);
-
-    // Distant mountain skyline silhouette
-    ctx.fillStyle = '#0a0a18';
-    ctx.beginPath();
-    ctx.moveTo(0, horizonY);
-    const steps = 16;
-    for (let i = 0; i <= steps; i++) {
-      const x = (i / steps) * w;
-      const peak = i % 2 === 1 ? horizonY - (18 + Math.sin(i * 1.4) * 12) : horizonY - 4;
-      ctx.lineTo(x, peak);
-    }
-    ctx.lineTo(w, horizonY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Dark terrain ground beneath road
-    const groundGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-    groundGrad.addColorStop(0, '#0a0a14');
-    groundGrad.addColorStop(1, '#040408');
-    ctx.fillStyle = groundGrad;
-    ctx.fillRect(0, horizonY, w, h - horizonY);
-
-    // Stars
-    for (const star of this.stars) {
-      ctx.fillStyle = `rgba(220, 230, 255, ${star.brightness})`;
-      ctx.beginPath();
-      ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Horizon neon glow
-    const hGlow = ctx.createLinearGradient(0, horizonY - 30, 0, horizonY + 20);
-    hGlow.addColorStop(0, 'transparent');
-    hGlow.addColorStop(0.5, 'rgba(120, 100, 255, 0.22)');
-    hGlow.addColorStop(1, 'transparent');
-    ctx.fillStyle = hGlow;
-    ctx.fillRect(0, horizonY - 30, w, 50);
-
-    // Horizon line
-    ctx.strokeStyle = 'rgba(200, 210, 255, 0.4)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, horizonY);
-    ctx.lineTo(w, horizonY);
-    ctx.stroke();
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, w, h);
   }
 
   // ---- Main Frame Render ----
@@ -161,12 +94,12 @@ export class Renderer {
     this.renderHUD(world);
   }
 
-  // ---- Road Track with Perspective ----
+  // ---- Road Track with Perspective (OutRun-style stripes) ----
   renderRoadTrack(ctx, w, h, topY, bottomY, topW, bottomW, vanishX, vehicle, road, laneColors, laneCount) {
     const bottomCenterX = w / 2 - (vehicle.lateral / 400) * (w * 0.38);
 
-    // Full road polygon
-    ctx.fillStyle = '#0f101d';
+    // Road polygon fill (near-black base)
+    ctx.fillStyle = '#0d0d0d';
     ctx.beginPath();
     ctx.moveTo(vanishX - topW / 2, topY);
     ctx.lineTo(vanishX + topW / 2, topY);
@@ -175,79 +108,68 @@ export class Renderer {
     ctx.closePath();
     ctx.fill();
 
-    // Road neon borders (outer rails)
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = 'rgba(120, 100, 255, 0.6)';
-    ctx.strokeStyle = '#6c5ce7';
-    ctx.lineWidth = 3;
+    // OutRun-style alternating stripes (white/grey by depth)
+    const numStripes = 14;
+    const stripeOffset = (vehicle.position % 8) / 8;
+    for (let i = 0; i < numStripes; i++) {
+      const t0 = Math.pow(Math.min(1, (i + stripeOffset) / numStripes), 2.2);
+      const t1 = Math.pow(Math.min(1, (i + 1 + stripeOffset) / numStripes), 2.2);
+      const y0 = topY + (bottomY - topY) * t0;
+      const y1 = topY + (bottomY - topY) * t1;
+      const w0 = topW + (bottomW - topW) * t0;
+      const w1 = topW + (bottomW - topW) * t1;
+      const cx0 = vanishX + (bottomCenterX - vanishX) * t0;
+      const cx1 = vanishX + (bottomCenterX - vanishX) * t1;
+      ctx.fillStyle = i % 2 === 0 ? '#151515' : '#111111';
+      ctx.beginPath();
+      ctx.moveTo(cx0 - w0 / 2, y0);
+      ctx.lineTo(cx0 + w0 / 2, y0);
+      ctx.lineTo(cx1 + w1 / 2, y1);
+      ctx.lineTo(cx1 - w1 / 2, y1);
+      ctx.closePath();
+      ctx.fill();
+    }
 
-    // Left border
+    // Lane dividers (thin grey dashed lines in perspective)
+    for (let i = 1; i < laneCount; i++) {
+      const t = i / laneCount;
+      const topX = vanishX - topW / 2 + topW * t;
+      const botX = bottomCenterX - bottomW / 2 + bottomW * t;
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([8, 12]);
+      ctx.beginPath();
+      ctx.moveTo(topX, topY);
+      ctx.lineTo(botX, bottomY);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Road borders (solid white, no glow)
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 0;
     ctx.beginPath();
     ctx.moveTo(vanishX - topW / 2, topY);
     ctx.lineTo(bottomCenterX - bottomW / 2, bottomY);
     ctx.stroke();
-
-    // Right border
     ctx.beginPath();
     ctx.moveTo(vanishX + topW / 2, topY);
     ctx.lineTo(bottomCenterX + bottomW / 2, bottomY);
     ctx.stroke();
-    ctx.shadowBlur = 0;
 
-    // Individual Lanes with subtle gradient fills
-    for (let i = 0; i < laneCount; i++) {
-      const t0 = i / laneCount;
-      const t1 = (i + 1) / laneCount;
-
-      const topL = vanishX - topW / 2 + topW * t0;
-      const topR = vanishX - topW / 2 + topW * t1;
-      const botL = bottomCenterX - bottomW / 2 + bottomW * t0;
-      const botR = bottomCenterX - bottomW / 2 + bottomW * t1;
-
-      // Active lane glow
-      if (i === vehicle.lane()) {
-        ctx.fillStyle = laneColors[i] + '18'; // 10% opacity glow
-        ctx.beginPath();
-        ctx.moveTo(topL, topY);
-        ctx.lineTo(topR, topY);
-        ctx.lineTo(botR, bottomY);
-        ctx.lineTo(botL, bottomY);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      // Lane divider dashes
-      if (i > 0) {
-        ctx.strokeStyle = laneColors[i - 1] + '55';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([12, 16]);
-        ctx.beginPath();
-        ctx.moveTo(topL, topY);
-        ctx.lineTo(botL, bottomY);
-        ctx.stroke();
-      }
-    }
-    ctx.setLineDash([]);
-
-    // Animated speed dashes on the road (Z-scrolling grid lines)
-    const dashSpacing = 8; // in meters/units
-    const offset = (vehicle.position % dashSpacing) / dashSpacing;
-    const numDashes = 18;
-
-    for (let d = 0; d < numDashes; d++) {
-      const zNorm = (d + offset) / numDashes; // 0 (horizon) to 1 (near)
-      const pz = Math.pow(zNorm, 2.4); // perspective exponential curve
-      const y = topY + (bottomY - topY) * pz;
-      const curW = topW + (bottomW - topW) * pz;
-      const curCenterX = vanishX + (bottomCenterX - vanishX) * pz;
-
-      ctx.strokeStyle = `rgba(180, 190, 255, ${0.04 + pz * 0.16})`;
-      ctx.lineWidth = Math.max(1, pz * 2.5);
-      ctx.beginPath();
-      ctx.moveTo(curCenterX - curW / 2, y);
-      ctx.lineTo(curCenterX + curW / 2, y);
-      ctx.stroke();
-    }
+    // Active lane subtle highlight (accent color, very low opacity)
+    const activeLane = vehicle.lane();
+    const at0 = activeLane / laneCount;
+    const at1 = (activeLane + 1) / laneCount;
+    ctx.fillStyle = this.accentColor + '0a'; // ~4% opacity
+    ctx.beginPath();
+    ctx.moveTo(vanishX - topW / 2 + topW * at0, topY);
+    ctx.lineTo(vanishX - topW / 2 + topW * at1, topY);
+    ctx.lineTo(bottomCenterX - bottomW / 2 + bottomW * at1, bottomY);
+    ctx.lineTo(bottomCenterX - bottomW / 2 + bottomW * at0, bottomY);
+    ctx.closePath();
+    ctx.fill();
   }
 
   // ---- Z-Depth Sprites (The Core Visual Concept) ----
@@ -565,6 +487,19 @@ export class Renderer {
       return true;
     });
     ctx.globalAlpha = 1.0;
+  }
+
+  // ---- Hit Flash Tracking (consumed by Tasks 6, 7, 8) ----
+  recordHit(lane, position) {
+    this.recentHits.set(`${lane}:${position.toFixed(4)}`, performance.now());
+  }
+
+  isRecentlyHit(lane, position) {
+    const key = `${lane}:${position.toFixed(4)}`;
+    const t = this.recentHits.get(key);
+    if (!t) return false;
+    if (performance.now() - t > 80) { this.recentHits.delete(key); return false; }
+    return true;
   }
 
   // ---- HUD Overlay ----
