@@ -448,10 +448,10 @@ export class Renderer {
     }
   }
 
-  triggerDrop(lane, color, isDelete = false) {
+  triggerDrop(lane, isDelete = false) {
     this.dropEffects.push({
       lane,
-      color: isDelete ? '#ff3344' : color,
+      color: isDelete ? '#ff3344' : this.accentColor,
       alpha: 1.0,
       isDelete,
     });
