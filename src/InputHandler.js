@@ -25,6 +25,8 @@ export class InputHandler {
     this._anyKeyPressed = false;
     /** @type {boolean} Whether the handler is active */
     this._active = false;
+    /** @type {boolean} Whether a Shift key is currently held */
+    this._shift = false;
 
     // Bind handlers for clean removal
     this._onKeyDown = this._onKeyDown.bind(this);
@@ -58,6 +60,10 @@ export class InputHandler {
 
   /** @param {KeyboardEvent} e */
   _onKeyDown(e) {
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      this._shift = true;
+    }
+
     // Prevent default for game keys (avoid scrolling, etc.)
     if (InputHandler.GAME_KEYS.has(e.code)) {
       e.preventDefault();
@@ -74,6 +80,9 @@ export class InputHandler {
 
   /** @param {KeyboardEvent} e */
   _onKeyUp(e) {
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      this._shift = false;
+    }
     this._down.delete(e.code);
     this._released.add(e.code);
   }
@@ -137,14 +146,26 @@ export class InputHandler {
   /** @returns {boolean} Braking */
   get brake() { return this.isDown('ArrowDown'); }
 
-  /** @returns {boolean} Moving left */
-  get left() { return this.isDown('ArrowLeft'); }
+  /** @returns {boolean} Shift key is currently held */
+  get shiftHeld() { return this._shift; }
 
-  /** @returns {boolean} Moving right */
-  get right() { return this.isDown('ArrowRight'); }
+  /** @returns {boolean} Moving left — false when Shift is held (Shift+Arrow = jump) */
+  get left() { return !this._shift && this.isDown('ArrowLeft'); }
+
+  /** @returns {boolean} Moving right — false when Shift is held (Shift+Arrow = jump) */
+  get right() { return !this._shift && this.isDown('ArrowRight'); }
+
+  /** @returns {boolean} Jump left one lane — first frame of Shift+ArrowLeft only */
+  get jumpLeft() { return this._shift && this.wasPressed('ArrowLeft'); }
+
+  /** @returns {boolean} Jump right one lane — first frame of Shift+ArrowRight only */
+  get jumpRight() { return this._shift && this.wasPressed('ArrowRight'); }
 
   /** @returns {boolean} DROP action (place/remove event) — first frame only */
   get drop() { return this.wasPressed('Space'); }
+
+  /** @returns {boolean} Space held — true as long as Space is held */
+  get drivePlay() { return this.isDown('Space'); }
 
   /** @returns {boolean} Toggle DRIVE SOUND — first frame only */
   get toggleDrive() { return this.wasPressed('KeyD'); }
@@ -159,5 +180,6 @@ export class InputHandler {
  */
 InputHandler.GAME_KEYS = new Set([
   'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-  'Space', 'KeyD', 'Escape', 'KeyM', 'KeyP'
+  'Space', 'KeyD', 'Escape', 'KeyM', 'KeyP',
+  'ShiftLeft', 'ShiftRight'
 ]);

@@ -36,4 +36,15 @@ export class Vehicle {
     const halfRoad = (this.laneCount * this.laneWidth) / 2;
     return (this.lateral + halfRoad) / (this.laneCount * this.laneWidth) - 0.5;
   }
+
+  /**
+   * Instantly move vehicle to current lane ± delta, clamped to [0, laneCount-1].
+   * @param {number} delta - number of lanes to move (positive = right, negative = left)
+   */
+  jumpLane(delta) {
+    const halfRoad = (this.laneCount * this.laneWidth) / 2;
+    const currentLane = this.lane();
+    const targetLane = Math.max(0, Math.min(this.laneCount - 1, currentLane + delta));
+    this.lateral = -halfRoad + targetLane * this.laneWidth + this.laneWidth / 2;
+  }
 }
