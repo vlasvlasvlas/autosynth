@@ -81,8 +81,8 @@ export class Renderer {
     // 1. Draw Road Surface & Lanes
     this.renderRoadTrack(ctx, w, h, topY, bottomY, topW, bottomW, vanishX, vehicle, road, laneColors, laneCount);
 
-    // 2. Render Z-Depth Sprites (Gates, Musical Events, Scenery)
-    this.renderZSprites(ctx, w, h, topY, bottomY, topW, bottomW, vanishX, vehicle, road, sequencer, laneColors, laneCount, now);
+    // 2. Render Floor Marks (Events as perspective road marks + Gate)
+    this.renderFloorMarks(ctx, vehicle, sequencer, road);
 
     // 3. Render Particles & Hit Waves
     this.renderEffects(ctx, dt);
@@ -172,171 +172,120 @@ export class Renderer {
     ctx.fill();
   }
 
-  // ---- Z-Depth Sprites (The Core Visual Concept) ----
-  renderZSprites(ctx, w, h, topY, bottomY, topW, bottomW, vanishX, vehicle, road, sequencer, laneColors, laneCount, now) {
+  // ---- Floor Marks — Events as Perspective Road Marks ----
+  renderFloorMarks(ctx, vehicle, sequencer, road) {
+    const w = this.width;
+    const h = this.height;
+    const horizonY = h * 0.44;
+    const topY = horizonY;
+    const bottomY = h + 10;
+    const topW = Math.max(24, w * 0.04);
+    const bottomW = Math.min(w * 0.88, 1400);
+    const vanishX = w / 2 - (vehicle.lateral / 400) * (w * 0.1);
     const bottomCenterX = w / 2 - (vehicle.lateral / 400) * (w * 0.38);
-    const maxLookahead = 280; // Distance ahead in meters
+    const laneCount = this.config.laneCount();
+    const maxLookahead = 280;
 
-    // Gather events ahead from the sequencer (sorted far to near)
     const eventsAhead = sequencer.ahead(vehicle.position, road, maxLookahead);
-
-    // Also check for the Gate (Position 0)
     const distToGate = road.distanceAhead(vehicle.position, 0);
     const gateAhead = distToGate > 0 && distToGate < maxLookahead;
 
-    const spritesToDraw = [];
-
-    // Add musical event sprites
-    for (const ev of eventsAhead) {
-      const zDist = ev.distance; // distance in units
-      if (zDist <= 0) continue;
-      spritesToDraw.push({
-        type: 'event',
-        lane: ev.lane,
-        distance: zDist,
-        position: ev.position,
-      });
-    }
-
-    // Add Gate sprite
+    // Gate (loop marker arch)
     if (gateAhead) {
-      spritesToDraw.push({
-        type: 'gate',
-        distance: distToGate,
-      });
-    }
-
-    // Sort from farthest to nearest (Painter's Algorithm)
-    spritesToDraw.sort((a, b) => b.distance - a.distance);
-
-    // Render each sprite scaled with distance (1/z projection)
-    for (const item of spritesToDraw) {
-      const zNorm = 1 - Math.min(1, item.distance / maxLookahead); // 0 (horizon) -> 1 (camera)
-      const pz = Math.pow(zNorm, 2.2); // exponential perspective projection
-
+      const zNorm = 1 - Math.min(1, distToGate / maxLookahead);
+      const pz = Math.pow(zNorm, 2.2);
       const screenY = topY + (bottomY - topY) * pz;
       const roadW = topW + (bottomW - topW) * pz;
       const roadCX = vanishX + (bottomCenterX - vanishX) * pz;
-      const scale = Math.max(0.1, pz * 1.5); // scale factor
+      this._drawGate(ctx, roadCX, screenY, roadW, pz);
+    }
 
-      if (item.type === 'gate') {
-        this.drawGateSprite(ctx, roadCX, screenY, roadW, scale, now);
-      } else if (item.type === 'event') {
-        const laneW = roadW / laneCount;
-        const laneX = roadCX - roadW / 2 + laneW * (item.lane + 0.5);
-        this.drawMusicalEventSprite(ctx, laneX, screenY, item.lane, laneColors[item.lane], scale, pz, now);
-      }
+    // Floor marks — eventsAhead is already sorted farthest to nearest (painter's algorithm)
+    for (const ev of eventsAhead) {
+      if (ev.distance <= 0) continue;
+      const zNorm = 1 - Math.min(1, ev.distance / maxLookahead);
+      const pz = Math.pow(zNorm, 2.2);
+      if (pz < 0.01) continue;
+
+      const screenY = topY + (bottomY - topY) * pz;
+      if (screenY <= topY) continue; // clip at horizon
+
+      const roadW = topW + (bottomW - topW) * pz;
+      const roadCX = vanishX + (bottomCenterX - vanishX) * pz;
+      const laneW = roadW / laneCount;
+      const laneCX = roadCX - roadW / 2 + laneW * (ev.lane + 0.5);
+
+      const hit = this.isRecentlyHit(ev.lane, ev.position);
+      const color = hit ? this.accentColor : '#ffffff';
+      const markW = laneW * 0.72;
+      const markH = Math.max(2, pz * 10);
+
+      this._drawFloorMark(ctx, ev.lane, laneCX, screenY, markW, markH, color);
     }
   }
 
-  // ---- Draw Gate / Arch (Lap Marker) ----
-  drawGateSprite(ctx, cx, cy, roadW, scale, now) {
-    const archH = 90 * scale;
-    const archW = roadW * 1.05;
-
+  // ---- Floor Mark Shape Renderer ----
+  _drawFloorMark(ctx, shape, cx, y, markW, markH, color) {
     ctx.save();
-    ctx.strokeStyle = '#ffffff';
-    ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 18 * scale;
-    ctx.lineWidth = Math.max(2, 4 * scale);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
 
-    // Arch pillars & top beam
-    ctx.beginPath();
-    ctx.moveTo(cx - archW / 2, cy);
-    ctx.lineTo(cx - archW / 2, cy - archH);
-    ctx.lineTo(cx + archW / 2, cy - archH);
-    ctx.lineTo(cx + archW / 2, cy);
-    ctx.stroke();
+    switch (shape) {
+      case 0: // Kick — filled rect (full lane width × markH)
+        ctx.fillRect(cx - markW / 2, y - markH / 2, markW, markH);
+        break;
 
-    // Luminous Gate Sign "OUTSYNTH // LOOP"
-    if (scale > 0.35) {
-      ctx.fillStyle = '#00f0ff';
-      ctx.font = `bold ${Math.round(11 * scale)}px "Space Mono", monospace`;
-      ctx.textAlign = 'center';
-      ctx.fillText('◆ LOOP GATE ◆', cx, cy - archH - 6 * scale);
+      case 1: // Snare — two parallel horizontal lines
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y - 2); ctx.lineTo(cx + markW / 2, y - 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y + 2); ctx.lineTo(cx + markW / 2, y + 2); ctx.stroke();
+        break;
+
+      case 2: // Hi-Hat — dotted line (3px dot every 8px)
+        for (let x = cx - markW / 2; x < cx + markW / 2; x += 8) {
+          ctx.beginPath();
+          ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+
+      case 3: // Clap — three parallel horizontal lines
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y - 3); ctx.lineTo(cx + markW / 2, y - 3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y); ctx.lineTo(cx + markW / 2, y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y + 3); ctx.lineTo(cx + markW / 2, y + 3); ctx.stroke();
+        break;
+
+      case 4: // Synth Low — outline rect, no fill
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - markW / 2, y - markH / 2, markW, markH);
+        break;
+
+      case 5: // Synth High — single thin horizontal line
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y); ctx.lineTo(cx + markW / 2, y); ctx.stroke();
+        break;
     }
     ctx.restore();
   }
 
-  // ---- Draw Musical Event Sprites (Kick, Snare, Hat, Synth) ----
-  drawMusicalEventSprite(ctx, x, y, lane, color, scale, pz, now) {
+  // ---- Gate / Loop Arch Marker ----
+  _drawGate(ctx, cx, y, roadW, scale) {
+    const archH = 60 * scale;
     ctx.save();
-    const baseSize = 42 * scale;
-    const glowAlpha = Math.min(1, 0.4 + pz * 0.6);
-
-    ctx.shadowColor = color;
-    ctx.shadowBlur = (12 + Math.sin(now * 0.008) * 4) * scale;
-
-    switch (lane) {
-      case 0: { // Kick — Radiant Monolith Cube
-        const w = baseSize * 1.1;
-        const h = baseSize * 1.3;
-        ctx.fillStyle = color;
-        ctx.fillRect(x - w / 2, y - h, w, h);
-
-        // Core glow
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(x - w * 0.25, y - h * 0.8, w * 0.5, h * 0.6);
-
-        // Ground shadow/reflection
-        ctx.fillStyle = color + '44';
-        ctx.fillRect(x - w * 0.6, y, w * 1.2, 4 * scale);
-        break;
-      }
-
-      case 1: { // Snare — Neon Pillar & Diamond
-        const size = baseSize * 1.0;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(x, y - size * 1.4);
-        ctx.lineTo(x + size * 0.6, y - size * 0.7);
-        ctx.lineTo(x, y);
-        ctx.lineTo(x - size * 0.6, y - size * 0.7);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x, y - size * 0.7, size * 0.25, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-      }
-
-      case 2: { // Hi-Hat — Rhythm Beacon / Rings
-        const rad = baseSize * 0.55;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = Math.max(1.5, 3 * scale);
-        ctx.beginPath();
-        ctx.arc(x, y - rad * 1.2, rad, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x, y - rad * 1.2, rad * 0.35, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-      }
-
-      case 3: { // Synth — Crystal Energy Tower / Pyramidal Spike
-        const w = baseSize * 0.9;
-        const h = baseSize * 1.7;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(x, y - h);
-        ctx.lineTo(x + w / 2, y);
-        ctx.lineTo(x - w / 2, y);
-        ctx.closePath();
-        ctx.fill();
-
-        // Inner radiant beam
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = Math.max(1, 2 * scale);
-        ctx.beginPath();
-        ctx.moveTo(x, y - h);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        break;
-      }
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(1, 2 * scale);
+    ctx.beginPath();
+    ctx.moveTo(cx - roadW / 2, y);
+    ctx.lineTo(cx - roadW / 2, y - archH);
+    ctx.lineTo(cx + roadW / 2, y - archH);
+    ctx.lineTo(cx + roadW / 2, y);
+    ctx.stroke();
+    if (scale > 0.3) {
+      ctx.fillStyle = this.accentColor;
+      ctx.font = `${Math.round(9 * scale)}px "IBM Plex Mono", monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('LOOP', cx, y - archH - 4 * scale);
     }
     ctx.restore();
   }
