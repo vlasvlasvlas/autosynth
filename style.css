@@ -9,9 +9,9 @@
 }
 
 :root {
-  --font-primary: 'Inter', -apple-system, sans-serif;
-  --font-mono: 'Space Mono', monospace;
-  --color-bg: #0a0a0a;
+  --font-primary: 'IBM Plex Mono', monospace;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --color-bg: #000000;
   --color-text: #e0e0e0;
   --color-accent: #ffffff;
   --color-dim: #555555;
@@ -38,6 +38,7 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  background: #000;
 }
 
 #outsynth-container canvas {

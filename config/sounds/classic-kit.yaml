@@ -1,61 +1,58 @@
-# ============================================
-# OUTSYNTH — Sound Kit: Classic
-# ============================================
-# Hybrid kit: samples for drums, oscillator for synth
-
 sound_kit:
   name: "Classic Kit"
 
-  # LANDSCAPE events (spatial sequencer)
   landscape:
     lanes:
       - name: "Kick"
-        type: "sample"
-        file: "assets/samples/kick.mp3"
+        type: "oscillator"
+        waveform: "sine"
         volume: 1.0
-        polyphony: "mono"           # mono = cuts previous instance
+        polyphony: "mono"
 
       - name: "Snare"
-        type: "sample"
-        file: "assets/samples/snare.mp3"
+        type: "oscillator"
+        waveform: "triangle"
         volume: 0.9
         polyphony: "mono"
 
       - name: "Hi-Hat"
-        type: "sample"
-        file: "assets/samples/hat.mp3"
-        volume: 0.7
-        polyphony: "poly"           # poly = allows overlap
-
-      - name: "Synth"
         type: "oscillator"
-        waveform: "sawtooth"
-        envelope:
-          attack: 0.01
-          decay: 0.2
-          sustain: 0.3
-          release: 0.4
-        filter:
-          type: "lowpass"
-          frequency: 2000
-          resonance: 5
-        note: "C4"                  # default pitch for landscape events
-        volume: 0.6
+        waveform: "square"
+        volume: 0.7
+        polyphony: "poly"
+
+      - name: "Clap"
+        type: "oscillator"
+        waveform: "square"
+        volume: 0.75
         polyphony: "mono"
 
-  # DRIVE SOUND (continuous synth controlled by vehicle)
+      - name: "Synth Low"
+        type: "oscillator"
+        waveform: "sawtooth"
+        note: "C3"
+        volume: 0.75
+        polyphony: "mono"
+
+      - name: "Synth High"
+        type: "oscillator"
+        waveform: "sine"
+        note: "C4"
+        volume: 0.7
+        polyphony: "mono"
+
   drive:
     enabled: true
     toggle_key: "d"
     waveform: "sawtooth"
     scale:
-      root: "C3"
+      root: "C"
       type: "minor_pentatonic"
-      notes: ["C3", "Eb3", "G3", "Bb3"]   # one per lane
+      notes: ["C3", "Eb3", "G3", "Bb3", "C4", "Eb4"]
     filter:
       type: "lowpass"
-      min_frequency: 200           # at speed 0
-      max_frequency: 8000          # at max speed
+      min_frequency: 200
+      max_frequency: 8000
       resonance: 8
-    portamento: 0.08               # glide time between lanes (seconds)
+    portamento: 0.05
     volume: 0.4
