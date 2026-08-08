@@ -403,5 +403,63 @@ export class Renderer {
     ctx.textAlign = 'right';
     ctx.fillStyle = driveOn ? this.accentColor : 'rgba(255,255,255,0.2)';
     ctx.fillText(driveOn ? 'DRIVE' : '·', w - 24, 38);
+
+    // Minimap — bottom right
+    this.renderMinimap(ctx, world.vehicle, world.sequencer, world.road);
+  }
+
+  // ---- Cenital Minimap ----
+  renderMinimap(hudCtx, vehicle, sequencer, road) {
+    const ctx = hudCtx;
+    const w = this.width;
+    const h = this.height;
+
+    const SIZE = 130;
+    const PAD = 16;
+    const mapLeft = w - PAD - SIZE;
+    const mapTop = h - PAD - SIZE;
+    const cx = mapLeft + 65;
+    const cy = mapTop + 65;
+    const rx = 52;
+    const ry = 40;
+
+    ctx.save();
+
+    // Background: black rect
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(mapLeft, mapTop, SIZE, SIZE);
+
+    // Track outline: white thin ellipse
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Angle mapping helper
+    const mapAngle = (pos) => (pos / road.length) * Math.PI * 2 - Math.PI / 2;
+
+    // All events: white 2px dots at their oval position
+    ctx.fillStyle = '#ffffff';
+    for (const ev of sequencer.events.values()) {
+      const t = mapAngle(ev.position);
+      const ex = cx + rx * Math.cos(t);
+      const ey = cy + ry * Math.sin(t);
+      ctx.beginPath();
+      ctx.arc(ex, ey, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Vehicle: 4px filled circle in accent color
+    const vt = mapAngle(vehicle.position);
+    const vx = cx + rx * Math.cos(vt);
+    const vy = cy + ry * Math.sin(vt);
+    ctx.fillStyle = this.accentColor;
+    ctx.beginPath();
+    ctx.arc(vx, vy, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 }
