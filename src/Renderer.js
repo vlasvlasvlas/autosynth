@@ -120,7 +120,7 @@ export class Renderer {
       const w1 = topW + (bottomW - topW) * t1;
       const cx0 = vanishX + (bottomCenterX - vanishX) * t0;
       const cx1 = vanishX + (bottomCenterX - vanishX) * t1;
-      ctx.fillStyle = i % 2 === 0 ? '#151515' : '#111111';
+      ctx.fillStyle = i % 2 === 0 ? '#cccccc' : '#888888';
       ctx.beginPath();
       ctx.moveTo(cx0 - w0 / 2, y0);
       ctx.lineTo(cx0 + w0 / 2, y0);
