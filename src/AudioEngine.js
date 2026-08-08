@@ -1,9 +1,8 @@
 // ============================================
-// OUTSYNTH — AudioEngine
+// OUTSYNTH — AudioEngine v0.3
 // ============================================
-// Pro-grade Web Audio API engine.
-// Supports dynamic synthesized drum machines, customizable leads,
-// real-time sound kit switching, per-channel volume/mute/solo controls, and DRIVE Synth.
+// 6-lane Web Audio engine with scale selector,
+// drive mode, sustain, per-channel mixer controls.
 
 export class AudioEngine {
   constructor(soundKitConfig, masterVolume = 0.8) {
@@ -12,89 +11,60 @@ export class AudioEngine {
     this.context = null;
     this.master = null;
 
-    // DRIVE Sound
     this.drive = null;
     this.driveFilter = null;
     this.driveGain = null;
-    this.driveEnabled = false;
+    this.driveMode = false;
 
-    // Per-Track / Lane Sound Customizations
+    this.driveFrequencies = [130.81, 155.56, 196.00, 233.08, 261.63, 311.13];
+    this.currentScale = { rootNote: 'C', scaleType: 'minor_pentatonic' };
+
     this.trackSettings = [
-      {
-        id: 'kick',
-        name: 'KICK / BASS',
-        preset: '808_sub',
-        waveform: 'sine',
-        baseFreq: 130,
-        endFreq: 45,
-        decay: 0.28,
-        volume: 0.95,
-        muted: false,
-        solo: false,
-      },
-      {
-        id: 'snare',
-        name: 'SNARE / CLAP',
-        preset: '909_snare',
-        waveform: 'triangle',
-        baseFreq: 220,
-        noiseAmount: 0.8,
-        decay: 0.18,
-        volume: 0.85,
-        muted: false,
-        solo: false,
-      },
-      {
-        id: 'hat',
-        name: 'HI-HAT / PERC',
-        preset: 'crisp_hat',
-        waveform: 'square',
-        baseFreq: 8000,
-        decay: 0.08,
-        volume: 0.70,
-        muted: false,
-        solo: false,
-      },
-      {
-        id: 'synth',
-        name: 'SYNTH / LEAD',
-        preset: 'saw_lead',
-        waveform: 'sawtooth',
-        baseFreq: 261.63, // C4
-        filterFreq: 2400,
-        decay: 0.45,
-        volume: 0.75,
-        muted: false,
-        solo: false,
-      }
+      { id: 'kick',      name: 'KICK',      preset: '808_sub',    waveform: 'sine',     baseFreq: 130,    endFreq: 45,  decay: 0.28, volume: 0.95, muted: false, solo: false },
+      { id: 'snare',     name: 'SNARE',     preset: '909_snare',  waveform: 'triangle', baseFreq: 220,    noiseAmount: 0.8,  decay: 0.18, volume: 0.85, muted: false, solo: false },
+      { id: 'hat',       name: 'HI-HAT',    preset: 'crisp_hat',  waveform: 'square',   baseFreq: 8000,   decay: 0.08, volume: 0.70, muted: false, solo: false },
+      { id: 'clap',      name: 'CLAP',      preset: 'cyber_clap', waveform: 'square',   baseFreq: 280,    noiseAmount: 0.95, decay: 0.14, volume: 0.80, muted: false, solo: false },
+      { id: 'synth_low', name: 'SYNTH LOW', preset: 'acid_bass',  waveform: 'sawtooth', baseFreq: 130.81, filterFreq: 1400, decay: 0.35, volume: 0.75, muted: false, solo: false },
+      { id: 'synth_high',name: 'SYNTH HIGH',preset: 'dream_pad',  waveform: 'sine',     baseFreq: 261.63, filterFreq: 4200, decay: 0.50, volume: 0.70, muted: false, solo: false },
     ];
 
-    // Presets database
     this.presets = {
       0: [
-        { id: '808_sub', name: '808 Sub Kick', baseFreq: 140, endFreq: 42, decay: 0.32, waveform: 'sine' },
-        { id: 'club_punch', name: 'Club Punch Kick', baseFreq: 180, endFreq: 52, decay: 0.22, waveform: 'triangle' },
-        { id: 'electro_thump', name: 'Electro Thump', baseFreq: 220, endFreq: 60, decay: 0.15, waveform: 'square' },
-        { id: 'deep_acoustic', name: 'Deep Acoustic', baseFreq: 110, endFreq: 38, decay: 0.40, waveform: 'sine' }
+        { id: '808_sub',       name: '808 Sub Kick',    baseFreq: 140,    endFreq: 42,  decay: 0.32, waveform: 'sine' },
+        { id: 'club_punch',    name: 'Club Punch',      baseFreq: 180,    endFreq: 52,  decay: 0.22, waveform: 'triangle' },
+        { id: 'electro_thump', name: 'Electro Thump',   baseFreq: 220,    endFreq: 60,  decay: 0.15, waveform: 'square' },
+        { id: 'deep_acoustic', name: 'Deep Acoustic',   baseFreq: 110,    endFreq: 38,  decay: 0.40, waveform: 'sine' },
       ],
       1: [
-        { id: '909_snare', name: '909 Snare', baseFreq: 210, noiseAmount: 0.8, decay: 0.18, waveform: 'triangle' },
-        { id: 'cyber_clap', name: 'Cyber Clap', baseFreq: 280, noiseAmount: 0.95, decay: 0.25, waveform: 'square' },
-        { id: 'rim_snap', name: 'Rimshot Snap', baseFreq: 450, noiseAmount: 0.3, decay: 0.09, waveform: 'sine' },
-        { id: 'laser_zap', name: 'Laser Zap', baseFreq: 880, noiseAmount: 0.4, decay: 0.14, waveform: 'sawtooth' }
+        { id: '909_snare',  name: '909 Snare',      baseFreq: 210, noiseAmount: 0.8,  decay: 0.18, waveform: 'triangle' },
+        { id: 'cyber_clap', name: 'Cyber Clap',     baseFreq: 280, noiseAmount: 0.95, decay: 0.25, waveform: 'square' },
+        { id: 'rim_snap',   name: 'Rimshot Snap',   baseFreq: 450, noiseAmount: 0.3,  decay: 0.09, waveform: 'sine' },
+        { id: 'laser_zap',  name: 'Laser Zap',      baseFreq: 880, noiseAmount: 0.4,  decay: 0.14, waveform: 'sawtooth' },
       ],
       2: [
-        { id: 'crisp_hat', name: 'Crisp Closed Hat', baseFreq: 8000, decay: 0.06, waveform: 'square' },
-        { id: 'open_sizzle', name: 'Open Sizzle Hat', baseFreq: 6500, decay: 0.30, waveform: 'square' },
-        { id: 'cyber_shaker', name: 'Cyber Shaker', baseFreq: 5000, decay: 0.12, waveform: 'triangle' },
-        { id: 'synth_perc', name: 'Synth Perc Block', baseFreq: 1200, decay: 0.08, waveform: 'sine' }
+        { id: 'crisp_hat',    name: 'Crisp Closed Hat', baseFreq: 8000, decay: 0.06, waveform: 'square' },
+        { id: 'open_sizzle',  name: 'Open Sizzle',      baseFreq: 6500, decay: 0.30, waveform: 'square' },
+        { id: 'cyber_shaker', name: 'Cyber Shaker',     baseFreq: 5000, decay: 0.12, waveform: 'triangle' },
+        { id: 'synth_perc',   name: 'Synth Perc',       baseFreq: 1200, decay: 0.08, waveform: 'sine' },
       ],
       3: [
-        { id: 'saw_lead', name: 'Neon Saw Lead', baseFreq: 261.63, filterFreq: 2800, decay: 0.45, waveform: 'sawtooth' },
-        { id: 'square_pluck', name: 'Retro Chiptune Pluck', baseFreq: 329.63, filterFreq: 3500, decay: 0.22, waveform: 'square' },
-        { id: 'acid_bass', name: 'Acid Resonance Bass', baseFreq: 130.81, filterFreq: 1400, decay: 0.35, waveform: 'sawtooth' },
-        { id: 'dream_pad', name: 'Dream Chime', baseFreq: 392.00, filterFreq: 4200, decay: 0.70, waveform: 'sine' }
-      ]
+        { id: 'cyber_clap',  name: 'Cyber Clap',   baseFreq: 280, noiseAmount: 0.95, decay: 0.14, waveform: 'square' },
+        { id: 'hand_clap',   name: 'Hand Clap',    baseFreq: 350, noiseAmount: 0.7,  decay: 0.18, waveform: 'triangle' },
+        { id: 'snap',        name: 'Finger Snap',  baseFreq: 600, noiseAmount: 0.5,  decay: 0.07, waveform: 'sine' },
+        { id: 'wood_block',  name: 'Wood Block',   baseFreq: 800, noiseAmount: 0.2,  decay: 0.05, waveform: 'square' },
+      ],
+      4: [
+        { id: 'acid_bass',   name: 'Acid Bass',    baseFreq: 130.81, filterFreq: 1400, decay: 0.35, waveform: 'sawtooth' },
+        { id: 'sub_bass',    name: 'Sub Bass',     baseFreq: 65.41,  filterFreq: 800,  decay: 0.50, waveform: 'sine' },
+        { id: 'square_bass', name: 'Square Bass',  baseFreq: 130.81, filterFreq: 2000, decay: 0.30, waveform: 'square' },
+        { id: 'warm_bass',   name: 'Warm Bass',    baseFreq: 98.00,  filterFreq: 1200, decay: 0.45, waveform: 'triangle' },
+      ],
+      5: [
+        { id: 'dream_pad',    name: 'Dream Chime',  baseFreq: 392.00, filterFreq: 4200, decay: 0.70, waveform: 'sine' },
+        { id: 'saw_lead',     name: 'Saw Lead',     baseFreq: 261.63, filterFreq: 2800, decay: 0.45, waveform: 'sawtooth' },
+        { id: 'square_pluck', name: 'Chiptune',     baseFreq: 329.63, filterFreq: 3500, decay: 0.22, waveform: 'square' },
+        { id: 'bell',         name: 'Bell Tone',    baseFreq: 523.25, filterFreq: 5000, decay: 0.60, waveform: 'sine' },
+      ],
     };
   }
 
@@ -106,9 +76,7 @@ export class AudioEngine {
       this.master.gain.value = this.masterVolume;
       this.master.connect(this.context.destination);
     }
-    if (this.context.state === 'suspended') {
-      return this.context.resume();
-    }
+    if (this.context.state === 'suspended') return this.context.resume();
     return Promise.resolve();
   }
 
@@ -128,203 +96,210 @@ export class AudioEngine {
     return track.volume ?? 1.0;
   }
 
-  // ---- Trigger sound for a given lane (0 to 3) ----
   trigger(lane) {
     if (!this.context) return;
     const vol = this.effectiveVolume(lane);
-    if (vol <= 0.001) return; // Muted or inactive
-
+    if (vol <= 0.001) return;
     const now = this.context.currentTime;
     const track = this.trackSettings[lane] || this.trackSettings[0];
-
-    switch (lane) {
-      case 0: // KICK
-        this._playKick(track, vol, now);
-        break;
-      case 1: // SNARE
-        this._playSnare(track, vol, now);
-        break;
-      case 2: // HI-HAT
-        this._playHat(track, vol, now);
-        break;
-      case 3: // SYNTH
-        this._playSynth(track, vol, now);
-        break;
-    }
+    if (lane === 0)      this._playKick(track, vol, now);
+    else if (lane === 1) this._playSnare(track, vol, now);
+    else if (lane === 2) this._playHat(track, vol, now);
+    else if (lane === 3) this._playClap(track, vol, now);
+    else if (lane === 4) this._playSynth(track, vol, now);
+    else if (lane === 5) this._playSynth(track, vol, now);
   }
 
-  // --- Kick Synthesizer ---
   _playKick(cfg, vol, now) {
     const osc = this.context.createOscillator();
     const gain = this.context.createGain();
-
     osc.type = cfg.waveform || 'sine';
     osc.frequency.setValueAtTime(cfg.baseFreq || 140, now);
     osc.frequency.exponentialRampToValueAtTime(cfg.endFreq || 42, now + cfg.decay);
-
     gain.gain.setValueAtTime(vol, now);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + cfg.decay);
-
-    osc.connect(gain);
-    gain.connect(this.master);
-
-    osc.start(now);
-    osc.stop(now + cfg.decay + 0.05);
+    osc.connect(gain); gain.connect(this.master);
+    osc.start(now); osc.stop(now + cfg.decay + 0.05);
   }
 
-  // --- Snare Synthesizer ---
   _playSnare(cfg, vol, now) {
-    // Tonal body
     const osc = this.context.createOscillator();
     const oscGain = this.context.createGain();
     osc.type = cfg.waveform || 'triangle';
     osc.frequency.setValueAtTime(cfg.baseFreq || 220, now);
     osc.frequency.exponentialRampToValueAtTime(80, now + cfg.decay * 0.5);
-
     oscGain.gain.setValueAtTime(vol * 0.7, now);
     oscGain.gain.exponentialRampToValueAtTime(0.0001, now + cfg.decay);
-    osc.connect(oscGain);
-    oscGain.connect(this.master);
+    osc.connect(oscGain); oscGain.connect(this.master);
+    osc.start(now); osc.stop(now + cfg.decay);
 
-    osc.start(now);
-    osc.stop(now + cfg.decay);
-
-    // Noise burst
-    const bufferSize = Math.floor(this.context.sampleRate * cfg.decay);
-    const noiseBuffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-
+    const bufSize = Math.floor(this.context.sampleRate * cfg.decay);
+    const buf = this.context.createBuffer(1, bufSize, this.context.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
     const noise = this.context.createBufferSource();
-    noise.buffer = noiseBuffer;
-
-    const noiseFilter = this.context.createBiquadFilter();
-    noiseFilter.type = 'highpass';
-    noiseFilter.frequency.value = 1000;
-
-    const noiseGain = this.context.createGain();
-    noiseGain.gain.setValueAtTime(vol * (cfg.noiseAmount || 0.8), now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + cfg.decay);
-
-    noise.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(this.master);
-
-    noise.start(now);
-    noise.stop(now + cfg.decay);
+    noise.buffer = buf;
+    const hpf = this.context.createBiquadFilter();
+    hpf.type = 'highpass'; hpf.frequency.value = 1000;
+    const ng = this.context.createGain();
+    ng.gain.setValueAtTime(vol * (cfg.noiseAmount || 0.8), now);
+    ng.gain.exponentialRampToValueAtTime(0.0001, now + cfg.decay);
+    noise.connect(hpf); hpf.connect(ng); ng.connect(this.master);
+    noise.start(now); noise.stop(now + cfg.decay);
   }
 
-  // --- Hi-Hat Synthesizer ---
   _playHat(cfg, vol, now) {
-    const bufferSize = Math.floor(this.context.sampleRate * cfg.decay);
-    const noiseBuffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-
+    const bufSize = Math.floor(this.context.sampleRate * cfg.decay);
+    const buf = this.context.createBuffer(1, bufSize, this.context.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
     const noise = this.context.createBufferSource();
-    noise.buffer = noiseBuffer;
-
-    const bandpass = this.context.createBiquadFilter();
-    bandpass.type = 'bandpass';
-    bandpass.frequency.value = cfg.baseFreq || 8000;
-    bandpass.Q.value = 4.0;
-
+    noise.buffer = buf;
+    const bpf = this.context.createBiquadFilter();
+    bpf.type = 'bandpass'; bpf.frequency.value = cfg.baseFreq || 8000; bpf.Q.value = 4.0;
     const gain = this.context.createGain();
     gain.gain.setValueAtTime(vol * 0.85, now);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + cfg.decay);
-
-    noise.connect(bandpass);
-    bandpass.connect(gain);
-    gain.connect(this.master);
-
-    noise.start(now);
-    noise.stop(now + cfg.decay);
+    noise.connect(bpf); bpf.connect(gain); gain.connect(this.master);
+    noise.start(now); noise.stop(now + cfg.decay);
   }
 
-  // --- Synth Lead Synthesizer ---
+  _playClap(cfg, vol, now) {
+    for (let burst = 0; burst < 3; burst++) {
+      const t = now + burst * 0.012;
+      const bufSize = Math.floor(this.context.sampleRate * 0.04);
+      const buf = this.context.createBuffer(1, bufSize, this.context.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = this.context.createBufferSource();
+      noise.buffer = buf;
+      const hpf = this.context.createBiquadFilter();
+      hpf.type = 'highpass'; hpf.frequency.value = 1200;
+      const gain = this.context.createGain();
+      gain.gain.setValueAtTime(vol * (cfg.noiseAmount || 0.8) * (burst === 2 ? 1 : 0.5), t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + cfg.decay);
+      noise.connect(hpf); hpf.connect(gain); gain.connect(this.master);
+      noise.start(t); noise.stop(t + cfg.decay);
+    }
+  }
+
   _playSynth(cfg, vol, now) {
     const osc = this.context.createOscillator();
     const filter = this.context.createBiquadFilter();
     const gain = this.context.createGain();
-
     osc.type = cfg.waveform || 'sawtooth';
     osc.frequency.setValueAtTime(cfg.baseFreq || 261.63, now);
-
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(cfg.filterFreq || 2400, now);
     filter.frequency.exponentialRampToValueAtTime(400, now + cfg.decay);
-
     gain.gain.setValueAtTime(vol * 0.75, now);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + cfg.decay);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.master);
-
-    osc.start(now);
-    osc.stop(now + cfg.decay + 0.05);
+    osc.connect(filter); filter.connect(gain); gain.connect(this.master);
+    osc.start(now); osc.stop(now + cfg.decay + 0.05);
   }
 
-  // ---- Continuous DRIVE Sound (Key 'D') ----
-  updateDrive(speed, maxSpeed, lane) {
-    if (!this.context || !this.driveEnabled || !this.drive) return;
-    const ratio = Math.max(0, Math.min(1, speed / maxSpeed));
-    const laneFrequencies = [130.81, 155.56, 196.00, 233.08]; // C3, Eb3, G3, Bb3
+  // --- DRIVE MODE ---
 
-    const targetFreq = laneFrequencies[lane] || 130.81;
-    this.drive.frequency.setTargetAtTime(targetFreq, this.context.currentTime, 0.08);
+  toggleDriveMode() {
+    if (!this.context) return false;
+    this.driveMode = !this.driveMode;
+    if (this.driveMode && !this.drive) this._initDriveOscillator();
+    if (!this.driveMode) this.stopDriveSustain();
+    return this.driveMode;
+  }
 
-    // Cutoff opens with vehicle speed
+  _initDriveOscillator() {
+    this.drive = this.context.createOscillator();
+    this.drive.type = 'sawtooth';
+    this.driveFilter = this.context.createBiquadFilter();
+    this.driveFilter.type = 'lowpass';
+    this.driveFilter.frequency.value = 400;
+    this.driveFilter.Q.value = 6.0;
+    this.driveGain = this.context.createGain();
+    this.driveGain.gain.value = 0;
+    this.drive.connect(this.driveFilter);
+    this.driveFilter.connect(this.driveGain);
+    this.driveGain.connect(this.master);
+    this.drive.start();
+  }
+
+  triggerDriveSustain(lane) {
+    if (!this.context || !this.driveMode) return;
+    if (!this.drive) this._initDriveOscillator();
+    const freq = this.driveFrequencies[lane] ?? this.driveFrequencies[0];
+    this.drive.frequency.setTargetAtTime(freq, this.context.currentTime, 0.05);
+    const ratio = 0.5;
     const cutoff = 200 + ratio * 5500;
     this.driveFilter.frequency.setTargetAtTime(cutoff, this.context.currentTime, 0.06);
-
-    // Gain increases with speed
-    const targetGain = (0.02 + ratio * 0.18) * (this.masterVolume);
-    this.driveGain.gain.setTargetAtTime(targetGain, this.context.currentTime, 0.06);
+    const targetGain = 0.15 * this.masterVolume;
+    this.driveGain.gain.setTargetAtTime(targetGain, this.context.currentTime, 0.04);
   }
 
-  toggleDrive() {
-    if (!this.context) return false;
-    this.driveEnabled = !this.driveEnabled;
-    if (this.driveEnabled && !this.drive) {
-      this.drive = this.context.createOscillator();
-      this.drive.type = 'sawtooth';
-      this.driveFilter = this.context.createBiquadFilter();
-      this.driveFilter.type = 'lowpass';
-      this.driveFilter.frequency.value = 400;
-      this.driveFilter.Q.value = 6.0;
-
-      this.driveGain = this.context.createGain();
-      this.driveGain.gain.value = 0;
-
-      this.drive.connect(this.driveFilter);
-      this.driveFilter.connect(this.driveGain);
-      this.driveGain.connect(this.master);
-      this.drive.start();
-    }
-    if (!this.driveEnabled && this.driveGain) {
-      this.driveGain.gain.setTargetAtTime(0, this.context.currentTime, 0.04);
-    }
-    return this.driveEnabled;
+  stopDriveSustain() {
+    if (!this.context || !this.driveGain) return;
+    this.driveGain.gain.setTargetAtTime(0, this.context.currentTime, 0.03);
   }
 
-  // ---- Sound Preset & Customization Accessors ----
+  updateDrive(speed, maxSpeed, lane) {
+    if (!this.context || !this.driveMode || !this.drive) return;
+    const ratio = Math.max(0, Math.min(1, speed / maxSpeed));
+    const freq = this.driveFrequencies[lane] ?? this.driveFrequencies[0];
+    this.drive.frequency.setTargetAtTime(freq, this.context.currentTime, 0.05);
+    const cutoff = 200 + ratio * 5500;
+    this.driveFilter.frequency.setTargetAtTime(cutoff, this.context.currentTime, 0.06);
+  }
+
+  // --- SCALE SELECTOR ---
+
+  setScale(rootNote, scaleType) {
+    const NOTE_FREQS = {
+      'C':  130.81, 'C#': 138.59, 'D':  146.83, 'Eb': 155.56,
+      'E':  164.81, 'F':  174.61, 'F#': 185.00, 'G':  196.00,
+      'Ab': 207.65, 'A':  220.00, 'Bb': 233.08, 'B':  246.94,
+    };
+    const SCALES = {
+      minor_pentatonic: [0, 3, 7, 10, 12, 15],
+      major_pentatonic: [0, 2, 4, 7,  9,  12],
+      blues:            [0, 3, 5, 6,  7,  10],
+      natural_minor:    [0, 2, 3, 5,  7,  8],
+      major:            [0, 2, 4, 5,  7,  9],
+      dorian:           [0, 2, 3, 5,  7,  9],
+    };
+    const base = NOTE_FREQS[rootNote] || NOTE_FREQS['C'];
+    const intervals = SCALES[scaleType] || SCALES.minor_pentatonic;
+    this.driveFrequencies = intervals.map(s => base * Math.pow(2, s / 12));
+    this.currentScale = { rootNote, scaleType };
+  }
+
+  scaleNoteNames() {
+    const NOTE_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+    const SCALES = {
+      minor_pentatonic: [0, 3, 7, 10, 12, 15],
+      major_pentatonic: [0, 2, 4, 7,  9,  12],
+      blues:            [0, 3, 5, 6,  7,  10],
+      natural_minor:    [0, 2, 3, 5,  7,  8],
+      major:            [0, 2, 4, 5,  7,  9],
+      dorian:           [0, 2, 3, 5,  7,  9],
+    };
+    const rootIdx = NOTE_NAMES.indexOf(this.currentScale.rootNote);
+    const intervals = SCALES[this.currentScale.scaleType] || SCALES.minor_pentatonic;
+    return intervals.map(s => {
+      const semitone = (rootIdx + s) % 12;
+      const octave = 3 + Math.floor((rootIdx + s) / 12);
+      return `${NOTE_NAMES[semitone]}${octave}`;
+    });
+  }
+
+  // --- MIXER ---
+
   setPreset(lane, presetId) {
     const list = this.presets[lane] || [];
     const p = list.find(item => item.id === presetId);
-    if (p) {
-      Object.assign(this.trackSettings[lane], p);
-    }
+    if (p) Object.assign(this.trackSettings[lane], p);
   }
 
   setTrackProperty(lane, prop, val) {
-    if (this.trackSettings[lane]) {
-      this.trackSettings[lane][prop] = val;
-    }
+    if (this.trackSettings[lane]) this.trackSettings[lane][prop] = val;
   }
 
   toggleMute(lane) {
