@@ -190,20 +190,14 @@ export class Renderer {
     const distToGate = road.distanceAhead(vehicle.position, 0);
     const gateAhead = distToGate > 0 && distToGate < maxLookahead;
 
-    // Gate (loop marker arch)
-    if (gateAhead) {
-      const zNorm = 1 - Math.min(1, distToGate / maxLookahead);
-      const pz = Math.pow(zNorm, 2.2);
-      const screenY = topY + (bottomY - topY) * pz;
-      const roadW = topW + (bottomW - topW) * pz;
-      const roadCX = vanishX + (bottomCenterX - vanishX) * pz;
-      this._drawGate(ctx, roadCX, screenY, roadW, pz);
-    }
+    // Merge gate into item list so it sorts correctly with events (painter's algorithm)
+    const allItems = [...eventsAhead];
+    if (gateAhead) allItems.push({ isGate: true, distance: distToGate });
+    allItems.sort((a, b) => b.distance - a.distance);
 
-    // Floor marks — eventsAhead is already sorted farthest to nearest (painter's algorithm)
-    for (const ev of eventsAhead) {
-      if (ev.distance <= 0) continue;
-      const zNorm = 1 - Math.min(1, ev.distance / maxLookahead);
+    for (const item of allItems) {
+      if (item.distance <= 0) continue;
+      const zNorm = 1 - Math.min(1, item.distance / maxLookahead);
       const pz = Math.pow(zNorm, 2.2);
       if (pz < 0.01) continue;
 
@@ -212,15 +206,24 @@ export class Renderer {
 
       const roadW = topW + (bottomW - topW) * pz;
       const roadCX = vanishX + (bottomCenterX - vanishX) * pz;
+
+      if (item.isGate) {
+        this._drawGate(ctx, roadCX, screenY, roadW, pz);
+        continue;
+      }
+
       const laneW = roadW / laneCount;
-      const laneCX = roadCX - roadW / 2 + laneW * (ev.lane + 0.5);
+      const laneCX = roadCX - roadW / 2 + laneW * (item.lane + 0.5);
 
-      const hit = this.isRecentlyHit(ev.lane, ev.position);
+      const hit = this.isRecentlyHit(item.lane, item.position);
       const color = hit ? this.accentColor : '#ffffff';
-      const markW = laneW * 0.72;
-      const markH = Math.max(2, pz * 10);
 
-      this._drawFloorMark(ctx, ev.lane, laneCX, screenY, markW, markH, color);
+      // BASE_SIZE scale formula: large near camera, small at horizon
+      const scale = 2800 / (item.distance + 1);
+      const markW = (bottomW / laneCount) * Math.min(1, scale / 100);
+      const markH = Math.max(2, scale / 12);
+
+      this._drawFloorMark(ctx, item.lane, laneCX, screenY, markW, markH, color);
     }
   }
 
