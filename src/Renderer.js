@@ -27,10 +27,9 @@ export class Renderer {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
 
-    // Visual particles & hit animations
+    // Hit wave animations (particles removed in v0.3)
     this.particles = [];
     this.hitWaves = [];
-    this.dropEffects = [];
   }
 
   resize(w, h, dpr = 1) {
@@ -296,149 +295,63 @@ export class Renderer {
   // ---- Vehicle Sprite ----
   renderVehicle(ctx, w, h, vehicle, laneColors, vanishX, now) {
     const vx = w / 2;
-    const vy = h - 68;
-    const currentLane = vehicle.lane();
-    const laneColor = laneColors[currentLane] || '#ff3366';
-    const isMoving = vehicle.speed > 2;
+    const vy = h * 0.82;
+    const carW = 80;
+    const carH = 36;
 
     ctx.save();
 
-    // 1. Headlight Cones on the highway ahead
-    const beamGrad = ctx.createLinearGradient(vx, vy, vx, vy - 180);
-    const beamAlpha = isMoving ? 0.22 : 0.08;
-    beamGrad.addColorStop(0, `rgba(220, 235, 255, ${beamAlpha})`);
-    beamGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = beamGrad;
-    ctx.beginPath();
-    ctx.moveTo(vx - 20, vy);
-    ctx.lineTo(vx - 70, vy - 170);
-    ctx.lineTo(vx + 70, vy - 170);
-    ctx.lineTo(vx + 20, vy);
-    ctx.closePath();
-    ctx.fill();
+    // Body — white rectangle
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(vx - carW / 2, vy - carH / 2, carW, carH);
 
-    // 2. Vehicle Ground Shadow & Lane Aura
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.beginPath();
-    ctx.ellipse(vx, vy + 24, 38, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = laneColor + '33';
-    ctx.beginPath();
-    ctx.ellipse(vx, vy + 22, 48, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 3. Cyber Vehicle Body
-    const carW = 38;
-    const carH = 54;
-
-    // Chassis
-    ctx.fillStyle = '#121320';
-    ctx.strokeStyle = '#ffffff';
+    // 2px black stroke outline
+    ctx.strokeStyle = '#000000';
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(vx - carW / 2, vy - carH / 2, carW, carH, [8, 8, 4, 4]);
-    ctx.fill();
-    ctx.stroke();
+    ctx.strokeRect(vx - carW / 2, vy - carH / 2, carW, carH);
 
-    // Cockpit Canopy (tinted glass with reflection)
-    ctx.fillStyle = '#06060c';
-    ctx.strokeStyle = laneColor;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(vx - carW * 0.35, vy - carH * 0.38, carW * 0.7, carH * 0.48, [6, 6, 2, 2]);
-    ctx.fill();
-    ctx.stroke();
-
-    // Neon Tail Strip (Glows with active instrument lane color)
-    ctx.shadowColor = laneColor;
-    ctx.shadowBlur = 16;
-    ctx.fillStyle = laneColor;
-    ctx.fillRect(vx - carW * 0.42, vy + carH * 0.34, carW * 0.84, 5);
-
-    // Twin Exhaust Pulse Particles when moving
-    if (isMoving && Math.random() < 0.4) {
-      this.particles.push({
-        x: vx + (Math.random() < 0.5 ? -carW * 0.3 : carW * 0.3),
-        y: vy + carH * 0.4,
-        vx: (Math.random() - 0.5) * 20,
-        vy: Math.random() * 40 + 20,
-        color: laneColor,
-        life: 0.35,
-        maxLife: 0.35,
-        size: Math.random() * 3 + 2,
-      });
-    }
+    // Accent rear strip (bottom 4px)
+    ctx.fillStyle = this.accentColor;
+    ctx.fillRect(vx - carW / 2, vy + carH / 2 - 4, carW, 4);
 
     ctx.restore();
   }
 
-  // ---- Particle & Trigger Hit Wave Effects ----
+  // ---- Hit Wave Effects (particles removed in v0.3) ----
   triggerHit(lane, color) {
     this.hitWaves.push({
       x: this.width / 2,
       y: this.height - 70,
-      radius: 10,
-      maxRadius: 180,
-      color: color,
-      alpha: 1.0,
+      radius: 8,
+      maxRadius: 140,
+      color: this.accentColor,
+      alpha: 0.8,
     });
-
-    for (let i = 0; i < 14; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const spd = Math.random() * 240 + 80;
-      this.particles.push({
-        x: this.width / 2,
-        y: this.height - 70,
-        vx: Math.cos(angle) * spd,
-        vy: Math.sin(angle) * spd - 60,
-        color: color,
-        life: 0.5,
-        maxLife: 0.5,
-        size: Math.random() * 4 + 2,
-      });
-    }
   }
 
   triggerDrop(lane, isDelete = false) {
-    this.dropEffects.push({
-      lane,
-      color: isDelete ? '#ff3344' : this.accentColor,
-      alpha: 1.0,
-      isDelete,
-    });
+    if (!isDelete) {
+      this.triggerHit(lane, this.accentColor);
+    }
   }
 
   renderEffects(ctx, dt) {
-    // Hit Waves
+    // Hit waves
     this.hitWaves = this.hitWaves.filter(w => {
-      w.radius += dt * 420;
-      w.alpha -= dt * 2.2;
+      w.radius += dt * 320;
+      w.alpha -= dt * 2.5;
       if (w.alpha <= 0) return false;
-      ctx.strokeStyle = w.color;
+      ctx.strokeStyle = this.accentColor;
       ctx.globalAlpha = Math.max(0, w.alpha);
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(w.x, w.y, w.radius, w.radius * 0.35, 0, 0, Math.PI * 2);
+      ctx.ellipse(w.x, w.y, w.radius, w.radius * 0.3, 0, 0, Math.PI * 2);
       ctx.stroke();
       return true;
     });
-
-    // Particles
-    this.particles = this.particles.filter(p => {
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.life -= dt;
-      if (p.life <= 0) return false;
-      const alpha = p.life / p.maxLife;
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = alpha;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
-      ctx.fill();
-      return true;
-    });
     ctx.globalAlpha = 1.0;
+    // No particles in v0.3
+    this.particles = [];
   }
 
   // ---- Hit Flash Tracking (consumed by Tasks 6, 7, 8) ----
@@ -462,45 +375,33 @@ export class Renderer {
     ctx.clearRect(0, 0, w, h);
 
     const vehicle = world.vehicle;
-    const currentLane = vehicle.lane();
-    const laneColors = this.theme.laneColors();
-    const activeColor = laneColors[currentLane] || '#ff3366';
-    const instrumentNames = ['KICK [BASS]', 'SNARE [PUNCH]', 'HI-HAT [RHYTHM]', 'SYNTH [MELODY]'];
-
-    // 1. Live Musical Telemetry (Top Left)
     const mpb = this.config.get('outsynth.grid.mpb', 4);
     const liveBPM = Math.round((60 * vehicle.speed) / mpb);
+    const currentLane = vehicle.lane();
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = '700 20px "Space Mono", monospace';
+    // BPM — top left, large
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 32px "IBM Plex Mono", monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(`${liveBPM} BPM`, 24, 38);
+    ctx.fillText(`${liveBPM}`, 24, 44);
 
-    ctx.font = '400 11px "Space Mono", monospace';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.fillText(`SPEED: ${Math.round(vehicle.speed)} u/s  •  MPB: ${mpb}m/beat`, 24, 56);
+    ctx.font = '400 11px "IBM Plex Mono", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillText('BPM', 24, 58);
 
-    // 2. Active Instrument Badge (Top Center)
-    ctx.save();
-    ctx.shadowColor = activeColor;
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = activeColor;
-    ctx.font = '700 13px "Space Mono", monospace';
+    // Active lane name — top center
+    const laneNames = ['KICK', 'SNARE', 'HI-HAT', 'CLAP', 'SYNTH L', 'SYNTH H'];
+    const laneName = world.audio?.trackSettings?.[currentLane]?.name || laneNames[currentLane] || '';
+    ctx.font = '400 13px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
-    ctx.fillText(`TRACK ${currentLane + 1} // ${instrumentNames[currentLane]}`, w / 2, 36);
-    ctx.restore();
+    ctx.fillText(laneName, w / 2, 38);
 
-    // 3. Drive Mode Badge & Menu Shortcut (Top Right)
-    const driveOn = world.audio?.driveEnabled;
-    ctx.font = '700 11px "Space Mono", monospace';
+    // DRIVE indicator — top right
+    const driveOn = world.audio?.driveMode;
+    ctx.font = '400 13px "IBM Plex Mono", monospace';
     ctx.textAlign = 'right';
-    ctx.fillStyle = driveOn ? '#00f0ff' : 'rgba(255, 255, 255, 0.4)';
-    ctx.fillText(`[D] DRIVE: ${driveOn ? 'ON' : 'OFF'}  •  [ESC/M] SOUND STUDIO`, w - 24, 38);
-
-    // 4. Interactive Bottom Controls Helper
-    ctx.font = '400 11px "Space Mono", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-    ctx.fillText('▲/▼ SPEED   •   ◀/▶ LANE   •   [SPACE] DROP NOTE   •   [D] DRIVE   •   [ESC/M] SOUNDS', w / 2, h - 18);
+    ctx.fillStyle = driveOn ? this.accentColor : 'rgba(255,255,255,0.2)';
+    ctx.fillText(driveOn ? 'DRIVE' : '·', w - 24, 38);
   }
 }
