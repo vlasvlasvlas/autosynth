@@ -1,0 +1,83 @@
+# ============================================
+# OUTSYNTH — Theme: Minimalist
+# ============================================
+# Dark but readable. High contrast accents per lane.
+
+theme:
+  name: "Minimalist"
+
+  sky:
+    gradient:
+      top: "#05050f"
+      bottom: "#0f1028"
+
+  horizon:
+    color: "#252545"
+    glow: true
+
+  road:
+    surface: "#1a1a24"
+    surface_alt: "#141420"        # alternating segment color
+    border: "#3a3a5a"
+    center_line: "#2a2a44"
+    lane_markers: "#2a2a40"
+
+  # Each lane has an accent color used for sprites and feedback
+  lanes:
+    colors:
+      - "#ff3366"                  # lane 0 — kick (hot pink)
+      - "#33ffcc"                  # lane 1 — snare (cyan)
+      - "#ffcc33"                  # lane 2 — hat (gold)
+      - "#7c4dff"                  # lane 3 — synth (violet)
+
+  # Sprite appearance per instrument type
+  sprites:
+    kick:
+      shape: "monolith"
+      glow: true
+      pulse_on_trigger: true
+      scale: 1.2
+    snare:
+      shape: "pillar"
+      glow: true
+      pulse_on_trigger: true
+      scale: 1.0
+    hat:
+      shape: "beacon"
+      glow: false
+      blink_on_trigger: true
+      scale: 0.6
+    synth:
+      shape: "arc"
+      glow: true
+      trail: true
+      scale: 1.0
+
+  # Gate (lap marker)
+  gate:
+    color: "#ffffff"
+    opacity: 0.5
+    flash_on_cross: true
+    flash_color: "#ffffff"
+    flash_duration: 300
+
+  # Vehicle appearance
+  vehicle:
+    color: "#ffffff"
+    outline: "#555555"
+    trail: false
+
+  # Visual effects
+  effects:
+    drop_flash_color: "#ffffff"
+    drop_flash_duration: 150
+    delete_particles: true
+    delete_particle_count: 12
+    speed_lines: true
+    speed_lines_color: "#333355"
+    speed_lines_min_speed: 100
+
+  # Scenery
+  scenery:
+    post_color: "#3a3a5a"
+    post_glow: false

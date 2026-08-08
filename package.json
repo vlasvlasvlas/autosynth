@@ -1,0 +1,10 @@
+{
+  "name": "outsynth",
+  "version": "0.1.0",
+  "description": "Spatial music sequencer as pseudo-3D driving experience",
+  "private": true,
+  "scripts": {
+    "dev": "npx -y serve . -p 8080 --cors",
+    "start": "npx -y serve . -p 8080 --cors"
+  }
+}

@@ -1,0 +1,59 @@
+# ============================================
+# OUTSYNTH — Track: Oval
+# ============================================
+# Simple oval circuit with gentle curves. Good for first experience.
+
+track:
+  name: "Oval"
+  length: 3200                     # total length in world units
+
+  # Track is defined as a sequence of segments
+  # Each segment type: "straight" | "curve"
+  # Curves have direction ("left"|"right") and intensity (0-5)
+  segments:
+    - type: "straight"
+      length: 400
+
+    - type: "curve"
+      length: 250
+      direction: "right"
+      intensity: 2.0
+
+    - type: "straight"
+      length: 700
+
+    - type: "curve"
+      length: 250
+      direction: "left"
+      intensity: 2.5
+
+    - type: "straight"
+      length: 400
+
+    - type: "curve"
+      length: 250
+      direction: "right"
+      intensity: 2.0
+
+    - type: "straight"
+      length: 700
+
+    - type: "curve"
+      length: 250
+      direction: "left"
+      intensity: 2.5
+
+  # Gate position (lap marker / pórtico)
+  gate_position: 0
+
+  # Roadside scenery (non-interactive decorations)
+  scenery:
+    left:
+      - type: "post"
+        spacing: 40               # every N world units
+        offset: -1.3              # lateral distance from road center
+
+    right:
+      - type: "post"
+        spacing: 40
+        offset: 1.3

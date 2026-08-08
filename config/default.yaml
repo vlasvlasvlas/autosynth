@@ -1,0 +1,47 @@
+# ============================================
+# OUTSYNTH — Default Configuration
+# ============================================
+# This file defines the global defaults.
+# Values here can be overridden by specific configs.
+
+outsynth:
+  version: "0.1.0"
+
+  # Spatial grid
+  grid:
+    mpb: 4                    # metros por beat (spatial quantization unit)
+    subdivisions: 4           # subdivisiones por beat (16ths)
+    quantize: true            # auto-quantize on DROP
+
+  # Lane configuration
+  lanes:
+    count: 4                  # number of lanes/tracks
+    snap_strength: 0.15       # lateral magnetism (0=free, 1=rigid)
+    width: 200                # width of each lane in world units
+
+  # Vehicle physics
+  vehicle:
+    max_speed: 300            # world units/second
+    acceleration: 140         # units/s²
+    deceleration: 220         # units/s² (braking)
+    lateral_speed: 750        # lateral movement speed (faster & responsive)
+    inertia: 0.98             # friction factor per frame (1=no friction)
+
+  # Track geometry
+  track:
+    default: "oval"           # default track config to load
+    draw_distance: 300        # segments visible ahead
+
+  # Audio settings
+  audio:
+    lookahead_ms: 100         # spatial scheduling lookahead window
+    master_volume: 0.8        # master output volume (0-1)
+
+  # Start screen
+  start:
+    mode: "press_any_key"     # "press_any_key" | "auto_start"
+
+  # Display
+  display:
+    target_fps: 60
+    canvas_scale: 1           # pixel ratio multiplier (1=auto devicePixelRatio)
