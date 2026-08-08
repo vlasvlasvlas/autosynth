@@ -63,18 +63,29 @@ class Game {
     this.audio = new AudioEngine(this.config.sounds(), this.config.get('outsynth.audio.master_volume', 0.8));
 
     // Pre-populate a rhythm on the track so the world has music immediately
+    // Kick pattern
     this.sequencer.toggle(0, 16);
     this.sequencer.toggle(0, 48);
     this.sequencer.toggle(0, 80);
+    this.sequencer.toggle(0, 112);
+    // Snare
     this.sequencer.toggle(1, 32);
     this.sequencer.toggle(1, 64);
+    this.sequencer.toggle(1, 96);
+    // Hi-Hat
     this.sequencer.toggle(2, 16);
     this.sequencer.toggle(2, 24);
     this.sequencer.toggle(2, 32);
     this.sequencer.toggle(2, 40);
-    this.sequencer.toggle(2, 48);
-    this.sequencer.toggle(3, 40);
-    this.sequencer.toggle(3, 72);
+    // Clap
+    this.sequencer.toggle(3, 48);
+    this.sequencer.toggle(3, 80);
+    // Synth Low
+    this.sequencer.toggle(4, 40);
+    this.sequencer.toggle(4, 88);
+    // Synth High
+    this.sequencer.toggle(5, 64);
+    this.sequencer.toggle(5, 104);
 
     // 3. Setup Canvas & Renderer
     const bgCanvas = document.getElementById('bg-canvas');
@@ -151,33 +162,43 @@ class Game {
   }
 
   _update(dt) {
-    // 1. Vehicle Movement (Fast lateral speed + acceleration)
+    const laneCount = this.config.laneCount();
     const movement = this.vehicle.update(dt, this.input, this.road.length);
     const lane = this.vehicle.lane();
 
-    // 2. DROP Event (Space Key)
-    if (this.input.drop) {
-      const dropResult = this.sequencer.toggle(lane, this.vehicle.position);
-      const isDelete = dropResult?.action === 'deleted';
-      const color = this.theme.laneColor(lane);
-      this.audio.trigger(lane);
-      this.renderer.triggerDrop(lane, color, isDelete);
-      this.renderer.triggerHit(lane, color);
-    }
+    // Jump (Shift + arrow)
+    if (this.input.jumpLeft)  this.vehicle.jumpLane(-2);
+    if (this.input.jumpRight) this.vehicle.jumpLane(+2);
 
-    // 3. DRIVE SOUND Toggle (D Key)
+    // Toggle DRIVE mode (D key)
     if (this.input.toggleDrive) {
-      this.audio.toggleDrive();
+      this.audio.toggleDriveMode();
     }
 
-    // 4. Update Continuous Drive Synth
-    this.audio.updateDrive(this.vehicle.speed, this.config.vehiclePhysics().maxSpeed, lane);
+    if (this.audio.driveMode) {
+      // DRIVE mode: Space held = sustain, release = silence
+      if (this.input.drivePlay) {
+        this.audio.triggerDriveSustain(lane);
+      } else {
+        this.audio.stopDriveSustain();
+      }
+      this.audio.updateDrive(this.vehicle.speed, this.config.vehiclePhysics().maxSpeed, lane);
+    } else {
+      // WRITE mode: Space tap = paint floor + play once
+      this.audio.stopDriveSustain();
+      if (this.input.drop) {
+        const dropResult = this.sequencer.toggle(lane, this.vehicle.position);
+        const isDelete = dropResult?.action === 'deleted';
+        this.audio.trigger(lane);
+        this.renderer.triggerDrop(lane, isDelete);
+      }
+    }
 
-    // 5. Check Spatial Sequencer Triggers (Crossed notes)
+    // Spatial triggers: events crossed by vehicle
     const crossedEvents = this.sequencer.crossed(movement.previousPosition, movement.position, movement.wrapped);
     for (const ev of crossedEvents) {
       this.audio.trigger(ev.lane);
-      this.renderer.triggerHit(ev.lane, this.theme.laneColor(ev.lane));
+      this.renderer.recordHit(ev.lane, ev.position);
     }
   }
 }
