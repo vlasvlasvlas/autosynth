@@ -34,8 +34,8 @@ export class SoundMenu {
 
     const ROOTS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
     const SCALE_TYPES = [
-      { id: 'minor_pentatonic', name: 'Minor Pentatonic' },
-      { id: 'major_pentatonic', name: 'Major Pentatonic' },
+      { id: 'minor_pentatonic', name: 'Minor Penta' },
+      { id: 'major_pentatonic', name: 'Major Penta' },
       { id: 'blues',            name: 'Blues' },
       { id: 'natural_minor',    name: 'Natural Minor' },
       { id: 'major',            name: 'Major' },
@@ -85,9 +85,9 @@ export class SoundMenu {
                 <div class="control-group">
                   <div class="slider-header">
                     <label>VOL</label>
-                    <span class="val-display" id="vol-val-${i}" style="color: #f5a623;">${Math.round((track.volume ?? 1) * 100)}%</span>
+                    <span class="val-display" id="vol-val-${i}">${Math.round((track.volume ?? 1) * 100)}%</span>
                   </div>
-                  <input type="range" class="vol-slider" data-lane="${i}" min="0" max="1" step="0.05" value="${track.volume ?? 1}" style="accent-color: #f5a623;">
+                  <input type="range" class="vol-slider" data-lane="${i}" min="0" max="1" step="0.05" value="${track.volume ?? 1}">
                 </div>
                 <div class="control-group">
                   <label>PRESET</label>

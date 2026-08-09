@@ -245,7 +245,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 4px;
+  padding: 12px 24px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   flex-wrap: wrap;
 }
