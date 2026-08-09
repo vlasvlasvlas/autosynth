@@ -239,6 +239,48 @@ html, body {
   transform: translateY(-1px);
 }
 
+/* Drive Scale Section */
+
+.scale-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-wrap: wrap;
+}
+
+.scale-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.1em;
+  min-width: 90px;
+}
+
+.scale-preview {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: #f5a623;
+  letter-spacing: 0.08em;
+}
+
+.scale-section select {
+  background: #111;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+}
+
+.scale-section select:focus {
+  border-color: #f5a623;
+}
+
 /* Tracks Grid */
 
 .tracks-grid {
