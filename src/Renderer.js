@@ -51,8 +51,28 @@ export class Renderer {
     const ctx = this.bgCtx;
     const w = this.width;
     const h = this.height;
-    ctx.fillStyle = '#000000';
+    // Deep dark background
+    ctx.fillStyle = '#050014';
     ctx.fillRect(0, 0, w, h);
+
+    // Glowing horizon sun/gradient
+    const horizonY = h * 0.44;
+    const grad = ctx.createLinearGradient(0, horizonY - 150, 0, horizonY);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, this.accentColor + '40'); // Glowing neon aura
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, horizonY - 150, w, 150);
+    
+    // Horizon line
+    ctx.strokeStyle = this.accentColor;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = this.accentColor;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(0, horizonY);
+    ctx.lineTo(w, horizonY);
+    ctx.stroke();
+    ctx.shadowBlur = 0; // reset
   }
 
   // ---- Main Frame Render ----
@@ -75,13 +95,14 @@ export class Renderer {
     const bottomW = Math.min(w * 0.88, 1400);
     const topY = horizonY;
     const bottomY = h + 10;
-    const vanishX = w / 2 - (vehicle.lateral / 400) * (w * 0.1);
+    const curve = road.curveAt(vehicle.position);
+    const vanishX = w / 2 - (vehicle.lateral / 400) * (w * 0.1) + curve * 30;
 
     // 1. Draw Road Surface & Lanes
     this.renderRoadTrack(ctx, w, h, topY, bottomY, topW, bottomW, vanishX, vehicle, road, laneColors, laneCount);
 
     // 2. Render Floor Marks (Events as perspective road marks + Gate)
-    this.renderFloorMarks(ctx, vehicle, sequencer, road);
+    this.renderFloorMarks(ctx, vehicle, sequencer, road, vanishX);
 
     // 3. Render Particles & Hit Waves
     this.renderEffects(ctx, dt);
@@ -93,12 +114,12 @@ export class Renderer {
     this.renderHUD(world);
   }
 
-  // ---- Road Track with Perspective (OutRun-style stripes) ----
+  // ---- Road Track with Perspective (Synthwave Grid) ----
   renderRoadTrack(ctx, w, h, topY, bottomY, topW, bottomW, vanishX, vehicle, road, laneColors, laneCount) {
     const bottomCenterX = w / 2 - (vehicle.lateral / 400) * (w * 0.38);
 
-    // Road polygon fill (near-black base)
-    ctx.fillStyle = '#0d0d0d';
+    // Road polygon fill
+    ctx.fillStyle = '#0a001a'; // dark purple/black
     ctx.beginPath();
     ctx.moveTo(vanishX - topW / 2, topY);
     ctx.lineTo(vanishX + topW / 2, topY);
@@ -107,72 +128,46 @@ export class Renderer {
     ctx.closePath();
     ctx.fill();
 
-    // OutRun-style alternating stripes (white/grey by depth)
-    const numStripes = 14;
+    // Horizontal grid lines (moving towards camera)
+    const numStripes = 20;
     const stripeOffset = (vehicle.position % 8) / 8;
+    ctx.strokeStyle = this.accentColor + '40'; // neon grid color with alpha
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = this.accentColor;
+    ctx.shadowBlur = 5;
+
     for (let i = 0; i < numStripes; i++) {
-      const t0 = Math.pow(Math.min(1, (i + stripeOffset) / numStripes), 2.2);
-      const t1 = Math.pow(Math.min(1, (i + 1 + stripeOffset) / numStripes), 2.2);
-      const y0 = topY + (bottomY - topY) * t0;
-      const y1 = topY + (bottomY - topY) * t1;
-      const w0 = topW + (bottomW - topW) * t0;
-      const w1 = topW + (bottomW - topW) * t1;
-      const cx0 = vanishX + (bottomCenterX - vanishX) * t0;
-      const cx1 = vanishX + (bottomCenterX - vanishX) * t1;
-      ctx.fillStyle = i % 2 === 0 ? '#cccccc' : '#888888';
+      const t = Math.pow(Math.min(1, (i + stripeOffset) / numStripes), 2.2);
+      const y = topY + (bottomY - topY) * t;
+      const curW = topW + (bottomW - topW) * t;
+      const cx = vanishX + (bottomCenterX - vanishX) * t;
+      
       ctx.beginPath();
-      ctx.moveTo(cx0 - w0 / 2, y0);
-      ctx.lineTo(cx0 + w0 / 2, y0);
-      ctx.lineTo(cx1 + w1 / 2, y1);
-      ctx.lineTo(cx1 - w1 / 2, y1);
-      ctx.closePath();
-      ctx.fill();
+      ctx.moveTo(cx - curW / 2, y);
+      ctx.lineTo(cx + curW / 2, y);
+      ctx.stroke();
     }
 
-    // Lane dividers (thin grey dashed lines in perspective)
-    for (let i = 1; i < laneCount; i++) {
+    // Vertical grid lines (Lane dividers)
+    for (let i = 0; i <= laneCount; i++) {
       const t = i / laneCount;
       const topX = vanishX - topW / 2 + topW * t;
       const botX = bottomCenterX - bottomW / 2 + bottomW * t;
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([8, 12]);
+      
+      ctx.lineWidth = (i === 0 || i === laneCount) ? 3 : 1;
+      ctx.strokeStyle = (i === 0 || i === laneCount) ? '#ffffff' : this.accentColor + '60';
+      ctx.shadowBlur = (i === 0 || i === laneCount) ? 10 : 4;
       ctx.beginPath();
       ctx.moveTo(topX, topY);
       ctx.lineTo(botX, bottomY);
       ctx.stroke();
     }
-    ctx.setLineDash([]);
-
-    // Road borders (solid white, no glow)
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 0;
-    ctx.beginPath();
-    ctx.moveTo(vanishX - topW / 2, topY);
-    ctx.lineTo(bottomCenterX - bottomW / 2, bottomY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(vanishX + topW / 2, topY);
-    ctx.lineTo(bottomCenterX + bottomW / 2, bottomY);
-    ctx.stroke();
-
-    // Active lane subtle highlight (accent color, very low opacity)
-    const activeLane = vehicle.lane();
-    const at0 = activeLane / laneCount;
-    const at1 = (activeLane + 1) / laneCount;
-    ctx.fillStyle = this.accentColor + '0a'; // ~4% opacity
-    ctx.beginPath();
-    ctx.moveTo(vanishX - topW / 2 + topW * at0, topY);
-    ctx.lineTo(vanishX - topW / 2 + topW * at1, topY);
-    ctx.lineTo(bottomCenterX - bottomW / 2 + bottomW * at1, bottomY);
-    ctx.lineTo(bottomCenterX - bottomW / 2 + bottomW * at0, bottomY);
-    ctx.closePath();
-    ctx.fill();
+    
+    ctx.shadowBlur = 0; // reset
   }
 
   // ---- Floor Marks — Events as Perspective Road Marks ----
-  renderFloorMarks(ctx, vehicle, sequencer, road) {
+  renderFloorMarks(ctx, vehicle, sequencer, road, vanishX) {
     const w = this.width;
     const h = this.height;
     const horizonY = h * 0.44;
@@ -180,7 +175,6 @@ export class Renderer {
     const bottomY = h + 10;
     const topW = Math.max(24, w * 0.04);
     const bottomW = Math.min(w * 0.88, 1400);
-    const vanishX = w / 2 - (vehicle.lateral / 400) * (w * 0.1);
     const bottomCenterX = w / 2 - (vehicle.lateral / 400) * (w * 0.38);
     const curve = road.curveAt(vehicle.position);
     const laneCount = this.config.laneCount();
@@ -233,41 +227,38 @@ export class Renderer {
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 15; // glowing paint effect
 
     switch (shape) {
-      case 0: // Kick — filled rect (full lane width × markH)
-        ctx.fillRect(cx - markW / 2, y - markH / 2, markW, markH);
+      case 0: // Kick — solid painted block
+        ctx.fillRect(cx - markW / 2 + 2, y - markH / 2, markW - 4, markH);
         break;
 
-      case 1: // Snare — two parallel horizontal lines
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y - 2); ctx.lineTo(cx + markW / 2, y - 2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y + 2); ctx.lineTo(cx + markW / 2, y + 2); ctx.stroke();
+      case 1: // Snare — two thick lines
+        ctx.fillRect(cx - markW / 2 + 2, y - markH / 2, markW - 4, markH * 0.3);
+        ctx.fillRect(cx - markW / 2 + 2, y + markH * 0.2, markW - 4, markH * 0.3);
         break;
 
-      case 2: // Hi-Hat — dotted line (3px dot every 8px)
-        for (let x = cx - markW / 2; x < cx + markW / 2; x += 8) {
-          ctx.beginPath();
-          ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-          ctx.fill();
+      case 2: // Hi-Hat — glowing dots (or small squares)
+        for (let x = cx - markW / 2 + 6; x < cx + markW / 2 - 2; x += 12) {
+          ctx.fillRect(x, y - markH / 4, Math.max(2, markH / 2), Math.max(2, markH / 2));
         }
         break;
 
-      case 3: // Clap — three parallel horizontal lines
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y - 3); ctx.lineTo(cx + markW / 2, y - 3); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y); ctx.lineTo(cx + markW / 2, y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y + 3); ctx.lineTo(cx + markW / 2, y + 3); ctx.stroke();
+      case 3: // Clap — three thick blocks
+        ctx.fillRect(cx - markW / 2 + 2, y - markH / 2, markW - 4, markH * 0.2);
+        ctx.fillRect(cx - markW / 2 + 2, y - markH * 0.1, markW - 4, markH * 0.2);
+        ctx.fillRect(cx - markW / 2 + 2, y + markH * 0.3, markW - 4, markH * 0.2);
         break;
 
-      case 4: // Synth Low — outline rect, no fill
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - markW / 2, y - markH / 2, markW, markH);
+      case 4: // Synth Low — outline glowing rect
+        ctx.lineWidth = Math.max(2, markH * 0.2);
+        ctx.strokeRect(cx - markW / 2 + 2, y - markH / 2, markW - 4, markH);
         break;
 
-      case 5: // Synth High — single thin horizontal line
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(cx - markW / 2, y); ctx.lineTo(cx + markW / 2, y); ctx.stroke();
+      case 5: // Synth High — single thick center line
+        ctx.fillRect(cx - markW / 2 + 2, y - markH * 0.15, markW - 4, markH * 0.3);
         break;
     }
     ctx.restore();
@@ -296,63 +287,83 @@ export class Renderer {
 
   // ---- Vehicle Sprite ----
   renderVehicle(ctx, w, h, vehicle, laneColors, vanishX, now) {
-    const vx = w / 2;
+    const bottomW = Math.min(w * 0.88, 1400);
+    const halfRoad = (vehicle.laneCount * vehicle.laneWidth) / 2;
+    const lateralT = (vehicle.lateral + halfRoad) / (vehicle.laneCount * vehicle.laneWidth);
+    const vx = w / 2 - bottomW / 2 + bottomW * lateralT;
     const vy = h * 0.82;
     const carW = 80;
     const carH = 36;
 
     ctx.save();
+    ctx.shadowBlur = 0;
 
-    // Body — white rectangle
+    // White body
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(vx - carW / 2, vy - carH / 2, carW, carH);
 
-    // 2px black stroke outline
+    // Black outline
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 2;
     ctx.strokeRect(vx - carW / 2, vy - carH / 2, carW, carH);
 
-    // Accent rear strip (bottom 4px)
+    // Accent rear strip
     ctx.fillStyle = this.accentColor;
     ctx.fillRect(vx - carW / 2, vy + carH / 2 - 4, carW, 4);
 
     ctx.restore();
   }
 
-  // ---- Hit Wave Effects (particles removed in v0.3) ----
+  // ---- Hit Wave Effects ----
   triggerHit(lane, color) {
     this.hitWaves.push({
-      x: this.width / 2,
-      y: this.height - 70,
+      lane: lane,
+      yPos: 0.82, // relative Y on screen
       radius: 8,
       maxRadius: 140,
-      color: this.accentColor,
-      alpha: 0.8,
+      color: color || this.accentColor,
+      alpha: 1.0,
     });
   }
 
   triggerDrop(lane, isDelete = false) {
     if (!isDelete) {
-      this.triggerHit(lane, this.accentColor);
+      this.triggerHit(lane, '#ffffff'); // bright flash on drop
     }
   }
 
   renderEffects(ctx, dt) {
+    const w = this.width;
+    const h = this.height;
+    const bottomW = Math.min(w * 0.88, 1400);
+    const laneCount = this.config.laneCount();
+    const laneW = bottomW / laneCount;
+
     // Hit waves
     this.hitWaves = this.hitWaves.filter(w => {
-      w.radius += dt * 320;
-      w.alpha -= dt * 2.5;
+      w.radius += dt * 400;
+      w.alpha -= dt * 3.0;
       if (w.alpha <= 0) return false;
-      ctx.strokeStyle = this.accentColor;
+      
+      // Calculate X center based on lane
+      // Simple approximation for the effect location
+      const startX = (this.width / 2) - (bottomW / 2);
+      const laneCX = startX + (laneW * (w.lane + 0.5));
+      const cy = h * w.yPos;
+
+      ctx.save();
+      ctx.strokeStyle = w.color;
+      ctx.shadowColor = w.color;
+      ctx.shadowBlur = 10;
       ctx.globalAlpha = Math.max(0, w.alpha);
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.ellipse(w.x, w.y, w.radius, w.radius * 0.3, 0, 0, Math.PI * 2);
+      ctx.ellipse(laneCX, cy, w.radius, w.radius * 0.25, 0, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.restore();
+      
       return true;
     });
-    ctx.globalAlpha = 1.0;
-    // No particles in v0.3
     this.particles = [];
   }
 
@@ -405,6 +416,12 @@ export class Renderer {
     ctx.textAlign = 'right';
     ctx.fillStyle = driveOn ? this.accentColor : 'rgba(255,255,255,0.2)';
     ctx.fillText(driveOn ? 'DRIVE' : '·', w - 24, 38);
+
+    // Controls hint — bottom center
+    ctx.font = '400 11px "IBM Plex Mono", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.textAlign = 'center';
+    ctx.fillText('◀ ▶ LANES  |  ▲ ▼ DRIVE  |  Z JUMP  |  SPACE PAINT', w / 2, h - 24);
 
     // Minimap — bottom right
     this.renderMinimap(ctx, world.vehicle, world.sequencer, world.road);
