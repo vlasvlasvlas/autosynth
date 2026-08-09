@@ -113,6 +113,26 @@ html, body {
   50%      { opacity: 1.0; }
 }
 
+#accent-picker {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.accent-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.accent-swatch.active {
+  border-color: #ffffff;
+}
+
 /* ============================================
    SOUND MENU MODAL OVERLAY
    ============================================ */

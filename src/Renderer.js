@@ -20,7 +20,7 @@ export class Renderer {
     this.theme = theme;
 
     // Accent color for highlights (amber)
-    this.accentColor = config.get('outsynth.accent_color', '#f5a623');
+    this.accentColor = window._outsynthAccentColor || config.get('outsynth.accent_color', '#f5a623');
     // Flash map: keyed by "lane:position", value = performance.now() timestamp
     this.recentHits = new Map();
 
@@ -182,6 +182,7 @@ export class Renderer {
     const bottomW = Math.min(w * 0.88, 1400);
     const vanishX = w / 2 - (vehicle.lateral / 400) * (w * 0.1);
     const bottomCenterX = w / 2 - (vehicle.lateral / 400) * (w * 0.38);
+    const curve = road.curveAt(vehicle.position);
     const laneCount = this.config.laneCount();
     const maxLookahead = 280;
 
@@ -212,7 +213,8 @@ export class Renderer {
       }
 
       const laneW = roadW / laneCount;
-      const laneCX = roadCX - roadW / 2 + laneW * (item.lane + 0.5);
+      const curveOffset = curve * (1 - item.distance / maxLookahead) * 80;
+      const laneCX = roadCX - roadW / 2 + laneW * (item.lane + 0.5) + curveOffset;
 
       const hit = this.isRecentlyHit(item.lane, item.position);
       const color = hit ? this.accentColor : '#ffffff';

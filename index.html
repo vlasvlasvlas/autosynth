@@ -23,10 +23,31 @@
       <div id="start-content">
         <h1 id="title">OUTSYNTH</h1>
         <p id="subtitle">spatial sequencer</p>
+        <div id="accent-picker">
+          <button class="accent-swatch active" data-color="#f5a623" style="background:#f5a623" title="Amber"></button>
+          <button class="accent-swatch" data-color="#00ff88" style="background:#00ff88" title="Green"></button>
+          <button class="accent-swatch" data-color="#ff3344" style="background:#ff3344" title="Red"></button>
+          <button class="accent-swatch" data-color="#00cfff" style="background:#00cfff" title="Cyan"></button>
+          <button class="accent-swatch" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+        </div>
         <p id="start-prompt">press any key</p>
       </div>
     </div>
   </div>
+
+  <script>
+    window._outsynthAccentColor = '#f5a623';
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.accent-swatch').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          window._outsynthAccentColor = btn.dataset.color;
+          document.querySelectorAll('.accent-swatch').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    });
+  </script>
 
   <!-- js-yaml from CDN (ESM) -->
   <script type="importmap">
