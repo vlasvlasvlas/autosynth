@@ -47,7 +47,7 @@ export class SoundMenu {
       <div class="menu-window">
         <div class="menu-header">
           <div>
-            <h2 class="menu-title">AUTOSYNTH // SOUND STUDIO</h2>
+            <h2 class="menu-title">AUTOSYNTH</h2>
           </div>
           <div class="header-actions">
             <div class="master-vol-control">
@@ -124,7 +124,7 @@ export class SoundMenu {
                 ${this.audio.drivePresets.map(p => `<option value="${p.id}" ${p.id === this.audio.currentDrivePresetId ? 'selected' : ''}>${p.name}</option>`).join('')}
               </select>
             </div>
-            <button id="test-drive-btn" style="width: 100%; margin-top: auto; background: transparent; border: 1px solid ${this.theme.accentColor}55; color: ${this.theme.accentColor}; padding: 0.5rem; font: inherit; cursor: pointer;">[HOLD] TO TEST</button>
+            <button id="test-drive-btn" class="test-sound-btn" style="width: 100%; margin-top: auto;">[HOLD] TO TEST</button>
           </div>
         </div>
 
