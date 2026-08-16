@@ -1,60 +1,49 @@
-# AUTOSYNTH
+# Autosynth
 
-**Autosynth** es un secuenciador musical espacial conducible. Invierte la relación tradicional entre la música y el tiempo: en lugar de una línea de tiempo que dicta cuándo ocurren los eventos, la música está físicamente distribuida en un circuito pseudo-3D infinito, y **el tiempo emerge a partir de cómo conduces a través de él.**
-
-No ajustas un control de BPM; simplemente aceleras.
+Autosynth es un secuenciador musical espacial interactivo. La música se distribuye en una pista virtual que el usuario recorre con un vehículo. El tiempo de reproducción (tempo/BPM) está determinado directamente por la velocidad de desplazamiento.
 
 ![Autosynth](https://img.shields.io/badge/Estado-Jugable-brightgreen?style=for-the-badge)
 
 ---
 
-## 🏎️ Concepto Central: Secuenciación Espacial
+## 🏎️ Secuenciación Espacial
 
-En un secuenciador tradicional: `Tiempo → Beats → Eventos Musicales`  
-En **Autosynth**: `Distancia → Velocidad de Recorrido → Eventos Musicales`
+En lugar de depender de una línea de tiempo tradicional (`Tiempo → Beats → Eventos`), el secuenciador utiliza un modelo de espacio (`Distancia → Velocidad → Eventos`).
 
-La longitud total de la pista representa físicamente y de manera exacta **8 compases (32 beats)**.
-- **La grilla es espacial**: Cuando sueltas una nota, se pinta una marca física en el asfalto.
-- **El tempo es físico**: Tu vehículo actúa como el cabezal de reproducción (playhead). Conducir más rápido cubre físicamente la distancia entre las notas en menos tiempo, aumentando de forma nativa el BPM.
-- **La matemática es real**: El BPM que se muestra en el HUD es un cálculo matemático exacto basado en la velocidad de tu vehículo (unidades por segundo) relativa a la longitud de la pista de 32 beats. A máxima velocidad, puedes alcanzar más de **2500 BPM**.
+La longitud de la pista equivale a **8 compases de 4/4 (32 beats)**.
+- **Grilla espacial**: Las notas musicales se posicionan como coordenadas físicas sobre la pista.
+- **BPM variable**: Al controlar la velocidad del vehículo, el usuario ajusta el tempo en tiempo real. 
+- **Cálculo de BPM**: El valor mostrado en pantalla se calcula dividiendo la velocidad actual del vehículo por la longitud espacial asignada a cada beat.
 
-## 🎮 Cómo Jugar (Controles)
+## 🎮 Controles
 
-Autosynth cuenta con una interfaz cruda y brutalista. El enfoque es puramente funcional, centrado en la interacción entre la conducción y la composición sonora.
-
-### Conducción y Tempo
-- `W` / `Flecha Arriba`: Acelerar (Aumentar BPM)
-- `S` / `Flecha Abajo`: Frenar / Reversa (Disminuir BPM)
-- `A` / `D` o `Izquierda` / `Derecha`: Moverse suavemente entre los 6 carriles (instrumentos).
-- `Shift` + `Izquierda` / `Derecha`: Salto instantáneo de 2 carriles para cambios rítmicos rápidos.
+### Conducción
+- `W` / `Flecha Arriba`: Acelerar (Aumentar BPM).
+- `S` / `Flecha Abajo`: Frenar / Reversa (Disminuir BPM).
+- `A` / `D` o `Izquierda` / `Derecha`: Cambiar de carril. Hay 6 carriles, cada uno asignado a un instrumento.
+- `Shift` + `Izquierda` / `Derecha`: Salto rápido de 2 carriles.
 
 ### Secuenciador (Modo WRITE)
-- `Espacio`: Soltar una nota en el carril actual, en tu ubicación física exacta. Se cuantizará automáticamente a los "Grid Steps" activos.
-- `X` (Mantener pulsado): Modo borrar. Conduce sobre notas existentes mientras mantienes la X para eliminarlas de la pista.
-- `1` - `9`: Cargar instantáneamente patrones de batería y progresiones de sintetizador pre-compuestas en la pista.
+- `Espacio`: Coloca una nota en el carril actual. La posición se ajusta automáticamente según la configuración de pasos (Grid Steps).
+- `X` (Mantener pulsado): Borra las notas con las que el vehículo entra en contacto.
+- `1` a `9`: Carga plantillas predefinidas de ritmos y progresiones.
 
-### Síntesis en Tiempo Real (Modo DRIVE)
-- `D`: Alternar entre el modo **WRITE** (pintar notas) y el modo **DRIVE** (síntesis en vivo).
-- `Espacio` (Mantener en modo DRIVE): Toca un acorde de sintetizador sostenido basado en tu carril actual. ¡El filtro del sintetizador (cutoff) se modula directamente con la velocidad de tu vehículo!
+### Síntesis (Modo DRIVE)
+- `D`: Alterna entre el modo secuenciador (WRITE) y el modo de síntesis en vivo (DRIVE).
+- `Espacio` (Mantener en modo DRIVE): Reproduce un acorde continuo. La frecuencia de corte (cutoff) del filtro se modula mediante la velocidad del vehículo.
 
-## 🎛️ Menú de Estudio de Sonido
+## 🎛️ Menú de Configuración
 
-Presiona `M`, `ESC` o `P` en cualquier momento para abrir el **Menú de Sonido** brutalista.
+Presiona `M`, `ESC` o `P` para abrir el menú de sonido. Opciones disponibles:
 
-Aquí puedes:
-- **Mutear / Solear** cualquiera de los 6 carriles de instrumentos.
-- Ajustar los niveles de **Volumen** individuales.
-- Cambiar el **Preset** (tipos de bombo, tipos de caja, etc.) por cada carril.
-- Configurar los **Grid Steps (Pasos)**: Cambia la resolución de cuantización de la pista al vuelo (16, 32, 64, 128 o 256 pasos). El minimapa actualizará instantáneamente sus marcas visuales para coincidir con tu configuración.
-- Seleccionar la **Escala Drive**: Elige la Nota Raíz y la Escala (Menor, Mayor, Blues, Dórica, etc.) en la que se bloqueará el sintetizador DRIVE.
-- Modificar el **Módulo de Síntesis**: Elige entre diferentes algoritmos de osciladores y filtros para el Sintetizador Drive (ej., Analog Dual, FM Bell, Bass Pulse).
+- **Mezclador**: Funciones de Mute, Solo y ajuste de volumen independiente para los 6 carriles.
+- **Presets**: Selección de sonidos para cada carril.
+- **Grid Steps**: Configura la resolución de cuantización de la pista (16, 32, 64, 128 o 256 pasos). El minimapa visualiza la cuadrícula seleccionada.
+- **Escala Drive**: Define la nota raíz y el modo musical (Mayor, Menor, Pentatónica, etc.) para el sintetizador.
+- **Módulo de Síntesis**: Selección de algoritmos y formas de onda (Analog Dual, FM Bell, Bass Pulse, etc.) para el sintetizador principal.
 
 ## 🚀 Arquitectura Técnica
 
-- **Audio**: API nativa de Web Audio (`AudioContext`, grafos de osciladores personalizados, filtros biquad). Sin librerías de audio externas.
-- **Gráficos**: Renderizado nativo en `<canvas>` HTML5 utilizando un algoritmo personalizado de rasterización pseudo-3D (inspirado en juegos de carreras clásicos como OutRun). Sin WebGL.
-- **Despliegue**: Archivos estáticos puros (HTML, CSS, JS). Desplegado automáticamente a través de GitHub Actions hacia GitHub Pages.
-
----
-
-*Conduce la música.*
+- **Audio**: Desarrollado sobre la API nativa de Web Audio (`AudioContext`). Generación de sonido basada en grafos de osciladores y filtros biquad, sin librerías externas.
+- **Gráficos**: Motor de renderizado pseudo-3D construido sobre `<canvas>` de HTML5, prescindiendo de WebGL.
+- **Despliegue**: Proyecto de archivos estáticos (HTML, CSS, JS). Cuenta con un flujo de trabajo de GitHub Actions para despliegue automatizado en GitHub Pages.
