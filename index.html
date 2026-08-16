@@ -33,6 +33,39 @@
         <p id="start-prompt">press any key</p>
       </div>
     </div>
+
+    <!-- Floating UI Buttons -->
+    <div id="floating-ui" class="hidden">
+      <button id="btn-help" class="floating-btn">?</button>
+      <button id="btn-config" class="floating-btn">⚙</button>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal-overlay hidden">
+      <div class="menu-window" style="max-width: 650px;">
+        <div class="menu-header">
+          <h2 class="menu-title">AUTOSYNTH // HELP</h2>
+          <button id="close-help-btn" class="menu-btn primary">CLOSE</button>
+        </div>
+        <div style="color: #ccc; font-size: 0.9rem; line-height: 1.6; font-family: 'IBM Plex Mono', monospace;">
+          <p style="margin-bottom: 1rem;"><strong>Autosynth</strong> is a spatial music sequencer. The music is laid out on a physical track. The speed at which you drive dictates the tempo (BPM) of the music.</p>
+          <p style="margin-bottom: 1.5rem;"><a href="https://github.com/vlasvlasvlas/autosynth/" target="_blank" style="color: #fff; text-decoration: underline;">View the source code on GitHub</a></p>
+          
+          <h3 style="color: #fff; margin-bottom: 0.8rem; border-bottom: 1px solid #333; padding-bottom: 0.4rem;">CONTROLS</h3>
+          <ul style="list-style: none; padding: 0; display: grid; gap: 0.5rem;">
+            <li><strong>[W] / [S]</strong> : Accelerate / Brake (Controls Tempo)</li>
+            <li><strong>[A] / [D]</strong> : Change Lane (Instrument)</li>
+            <li><strong>[SHIFT] + [A/D]</strong> : Instant double lane jump</li>
+            <li><strong>[SPACE]</strong> : Drop a note at current position (WRITE mode)</li>
+            <li><strong>[SPACE] (Hold)</strong> : Play synth chords (DRIVE mode)</li>
+            <li><strong>[X] (Hold)</strong> : Drive over notes to erase them</li>
+            <li><strong>[D]</strong> : Toggle between WRITE and DRIVE modes</li>
+            <li><strong>[1] - [9]</strong> : Load pre-composed rhythmic templates</li>
+            <li><strong>[M] / [ESC]</strong> : Open Sound Studio (Config)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>

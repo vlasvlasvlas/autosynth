@@ -491,3 +491,39 @@ input[type="range"] {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.4);
 }
+
+/* Floating UI */
+#floating-ui {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 40;
+  display: flex;
+  gap: 0.8rem;
+  transition: opacity 0.3s;
+}
+
+#floating-ui.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.floating-btn {
+  width: 40px;
+  height: 40px;
+  background: #000;
+  border: 1px solid #333;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-btn:hover {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}

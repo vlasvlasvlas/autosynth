@@ -78,6 +78,26 @@ class Game {
       this.state = State.PLAYING;
     });
 
+    // Bind floating UI buttons
+    document.getElementById('btn-config')?.addEventListener('click', () => {
+      this.soundMenu.toggle();
+    });
+    document.getElementById('btn-help')?.addEventListener('click', () => {
+      document.getElementById('help-modal')?.classList.remove('hidden');
+    });
+    document.getElementById('close-help-btn')?.addEventListener('click', () => {
+      document.getElementById('help-modal')?.classList.add('hidden');
+    });
+
+    this.state = State.START_SCREEN;
+    this._startFadeStarted = false;
+
+    // Listen for custom event from accent color picker
+    window.addEventListener('outsynth-accent-change', (e) => {
+      this.theme.accentColor = e.detail.color;
+      this.renderer.setAccentColor(e.detail.color);
+    });
+
     // 5. Input Listener
     this.input.init();
 
@@ -106,6 +126,7 @@ class Game {
         const startScreenEl = document.getElementById('start-screen');
         if (startScreenEl) {
           startScreenEl.classList.add('hidden');
+          document.getElementById('floating-ui')?.classList.remove('hidden');
           setTimeout(() => {
             startScreenEl.style.display = 'none';
             this.state = State.PLAYING;
