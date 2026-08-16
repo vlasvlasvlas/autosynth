@@ -55,4 +55,54 @@ sound_kit:
       max_frequency: 8000
       resonance: 8
     portamento: 0.05
-    volume: 0.4
+    volume: 0.2
+    presets:
+      - id: "vangelis"
+        name: "Cosmos (Vangelis)"
+        module: "analog_dual"
+        detune: 15
+        waveform: "sawtooth"
+        filter_min: 300
+        filter_max: 6000
+        resonance: 2
+        portamento: 0.15
+      - id: "laurie"
+        name: "Algorithmic (Spiegel)"
+        module: "fm_bell"
+        waveform: "triangle"
+        filter_min: 150
+        filter_max: 2000
+        resonance: 5
+        portamento: 0.01
+      - id: "moroder"
+        name: "Driving (Moroder)"
+        module: "bass_pulse"
+        waveform: "square"
+        filter_min: 200
+        filter_max: 4000
+        resonance: 15
+        portamento: 0.05
+      - id: "daft"
+        name: "Robotic (Daft Punk)"
+        module: "robot_phase"
+        waveform: "sawtooth"
+        filter_min: 100
+        filter_max: 8000
+        resonance: 20
+        portamento: 0.05
+      - id: "kraftwerk"
+        name: "Autobahn (Kraftwerk)"
+        module: "industrial_pwm"
+        waveform: "square"
+        filter_min: 100
+        filter_max: 2500
+        resonance: 5
+        portamento: 0.00
+      - id: "space_lady"
+        name: "Casio (Space Lady)"
+        module: "lofi_casio"
+        waveform: "sine"
+        filter_min: 150
+        filter_max: 1500
+        resonance: 1
+        portamento: 0.10

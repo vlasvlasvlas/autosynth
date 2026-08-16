@@ -3,6 +3,11 @@
 > Todos los aspectos visuales, sonoros y de gameplay se configuran via YAML.
 > El código JS es el motor. El YAML es el contenido.
 
+> **Soporte v0.3:** grilla, carriles, física, distancia de dibujo, paleta de carretera,
+> formas de marcas, geometría de pista, nombres/volúmenes/waveforms de canal y parámetros
+> principales de DRIVE están conectados al runtime. `lookahead_ms`, `display`, scenery,
+> samples y polyphony quedan reservados para una fase posterior.
+
 ---
 
 ## Índice
@@ -41,7 +46,7 @@ grid:
 
 **Relación con BPM:**
 ```
-BPM = 60 × velocidad(m/s) / MPB
+BPM = 60 × |velocidad(m/s)| / MPB
 ```
 Si el vehículo va a 8 m/s y MPB = 4: `BPM = 60 × 8 / 4 = 120 BPM`
 
@@ -51,7 +56,7 @@ Si el vehículo va a 8 m/s y MPB = 4: `BPM = 60 × 8 / 4 = 120 BPM`
 
 | Clave | Tipo | Default | Descripción |
 |-------|------|---------|-------------|
-| `count` | número | `4` | Cantidad de carriles (= tracks/instrumentos). |
+| `count` | número | `6` | Cantidad de carriles (= tracks/instrumentos). |
 | `snap_strength` | número (0-1) | `0.15` | Magnetismo lateral. 0 = libre, 1 = snap rígido al centro del carril. |
 | `width` | número | `200` | Ancho de cada carril en unidades del mundo. |
 
@@ -62,6 +67,7 @@ Si el vehículo va a 8 m/s y MPB = 4: `BPM = 60 × 8 / 4 = 120 BPM`
 | Clave | Tipo | Default | Descripción |
 |-------|------|---------|-------------|
 | `max_speed` | número | `300` | Velocidad máxima en unidades/segundo. |
+| `reverse_max_speed` | número | `150` | Velocidad máxima de marcha atrás en unidades/segundo. |
 | `acceleration` | número | `120` | Aceleración en unidades/s². |
 | `deceleration` | número | `200` | Desaceleración (frenado) en unidades/s². |
 | `lateral_speed` | número | `400` | Velocidad de movimiento lateral. |
@@ -129,24 +135,28 @@ theme:
       - "#hexcolor"           # lane 1
       - "#hexcolor"           # lane 2
       - "#hexcolor"           # lane 3
+      - "#hexcolor"           # lane 4
+      - "#hexcolor"           # lane 5
   
   sprites:
     kick:
-      shape: "monolith"       # forma: monolith|pillar|beacon|arc
-      glow: true/false
-      pulse_on_trigger: true/false
-      scale: 1.0              # tamaño relativo
+      shape: "floor_block"
+      scale: 1.0
     snare:
-      shape: "pillar"
-      # ... mismos campos
+      shape: "floor_double"
+      scale: 1.0
     hat:
-      shape: "beacon"
-      blink_on_trigger: true/false
-      # ...
-    synth:
-      shape: "arc"
-      trail: true/false       # estela luminosa
-      # ...
+      shape: "floor_dot"
+      scale: 1.0
+    clap:
+      shape: "floor_triple"
+      scale: 1.0
+    synth_low:
+      shape: "floor_outline"
+      scale: 1.0
+    synth_high:
+      shape: "floor_line"
+      scale: 1.0
   
   gate:                       # pórtico de vuelta
     color: "#hexcolor"
@@ -178,10 +188,12 @@ theme:
 
 | Shape | Descripción | Mejor para |
 |-------|-------------|------------|
-| `monolith` | Bloque alto, sólido, imponente | Kick, bajos |
-| `pillar` | Columna vertical delgada | Snare, claps |
-| `beacon` | Marcador pequeño, repetitivo | Hi-hat, percusión |
-| `arc` | Estructura curva/luminosa | Synths, pads |
+| `floor_block` | Franja llena dentro del carril | Kick |
+| `floor_double` | Dos franjas paralelas | Snare |
+| `floor_dot` | Línea punteada | Hi-hat |
+| `floor_triple` | Tres franjas paralelas | Clap / percusión |
+| `floor_outline` | Franja hueca | Synth low |
+| `floor_line` | Línea fina sólida | Synth high |
 
 ### Cómo crear un nuevo theme
 

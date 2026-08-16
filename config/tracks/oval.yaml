@@ -24,8 +24,8 @@ track:
 
     - type: "curve"
       length: 250
-      direction: "left"
-      intensity: 2.5
+      direction: "right"
+      intensity: 2.0
 
     - type: "straight"
       length: 400
@@ -40,8 +40,8 @@ track:
 
     - type: "curve"
       length: 250
-      direction: "left"
-      intensity: 2.5
+      direction: "right"
+      intensity: 2.0
 
   # Gate position (lap marker / pórtico)
   gate_position: 0

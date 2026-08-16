@@ -1,31 +1,62 @@
-# OUTSYNTH — Verificación manual del MVP
+# OUTSYNTH — Plan de verificación
+
+## Automatizado
+
+Ejecutar:
+
+```bash
+npm test
+```
+
+La suite comprueba:
+
+- longitud y normalización circular de la pista;
+- distancia hacia adelante y distancia firmada alrededor del loop;
+- entrada/salida suave de curvas;
+- cuantización, toggle y disparo al cruzar el final de vuelta;
+- posición inicial, avance/reversa, wrap inverso, snap y salto de carriles;
+- cruce de eventos en reversa y envolventes reverse con release anticlick;
+- consumo de configuración YAML por AudioEngine;
+- alineación matemática entre vehículo, carril y proyección curva.
 
 ## Arranque
 
-1. Ejecutar `npm run dev` y abrir la aplicación.
-2. Pulsar cualquier tecla: la pantalla inicial debe desaparecer y el HUD mostrar carril, velocidad y BPM aproximado.
+1. Ejecutar `npm run dev` y abrir la URL informada por el servidor.
+2. Elegir un acento y pulsar una tecla.
+3. Verificar que vehículo, carril activo y minimap usan el acento elegido.
+4. Confirmar que la consola no registra errores.
 
-## Conducción
+## Conducción y perspectiva
 
-1. Mantener flecha arriba: la velocidad debe aumentar hasta el máximo.
-2. Soltarla: la velocidad debe caer gradualmente.
-3. Usar izquierda y derecha: el vehículo debe desplazarse y el número de carril debe cambiar.
-4. Llegar a una curva: el horizonte de carretera debe desplazarse levemente.
+1. Mantener `↑`: velocidad y BPM deben aumentar.
+2. Soltar: debe actuar la inercia; `↓` debe frenar, atravesar cero y entrar en reversa si se mantiene.
+3. Usar `←/→`: el vehículo debe terminar centrado en un carril.
+4. Usar `Shift + ←/→`: debe saltar dos carriles y destellar brevemente.
+5. Entrar y salir de cada curva: la carretera debe doblarse de forma continua, sin teletransportar el punto de fuga.
+6. Verificar que bordes, divisores, franjas, pórtico y marcas se curvan juntos.
 
-## Secuenciador
+## Secuenciador / WRITE
 
-1. Con el vehículo en movimiento, pulsar espacio: debe aparecer un marcador en el carril y escucharse un sonido.
-2. Pulsar espacio otra vez cerca de la misma celda: el marcador debe desaparecer.
-3. Esperar una vuelta completa: cada marcador debe sonar al cruzarse, sin importar el carril actual.
+1. Con DRIVE apagado, pulsar `SPACE` en cada carril.
+2. Debe sonar inmediatamente y aparecer la forma correspondiente dentro de ese carril.
+3. No debe aparecer ningún círculo o efecto separado al costado.
+4. Volver a pulsar en la misma celda: debe borrarse.
+5. Completar una vuelta: todos los eventos deben disparar al cruzarse, sin depender del carril actual.
+6. Probar un evento cerca del final de pista y confirmar el disparo después del wrap.
+7. Retroceder sobre eventos: deben dispararse una sola vez, en orden inverso y con su sonido reverse.
+8. Retroceder desde el inicio: los eventos precargados detrás del pórtico deben sonar sin necesitar una vuelta completa.
 
-## Audio y pausa
+## DRIVE y Sound Studio
 
-1. Pulsar `D`: DRIVE debe añadirse al sonido y reaccionar a velocidad/carril.
-2. Pulsar `D` otra vez: DRIVE debe silenciarse.
-3. Pulsar Escape: posición y velocidad deben congelarse. Pulsarlo otra vez debe reanudar.
+1. Pulsar `D`: `SPACE` ya no debe escribir.
+2. Mantener y soltar `SPACE`: el sustain debe abrirse y silenciarse sin clicks evidentes.
+3. Cambiar de carril con `SPACE` sostenido: debe cambiar la nota.
+4. Abrir Sound Studio con `Esc` o `M`: movimiento y sustain deben detenerse.
+5. Probar root/escala, volumen master, volúmenes de canal, mute, solo, presets y botones TEST.
+6. Cerrar el menú y confirmar que el juego continúa desde la misma posición.
 
-## Comprobaciones técnicas realizadas
+## Pendiente antes de publicar
 
-- Sintaxis de todos los módulos JavaScript: correcta mediante `node --check`.
-- Longitud declarada del óvalo: coincide con la suma de sus segmentos.
-- Pendiente antes de publicar: prueba visual y de interacción en los navegadores objetivo.
+- Prueba auditiva y de latencia en Chrome, Safari y Firefox.
+- Prueba de alta densidad de eventos a velocidad máxima.
+- Verificación de resize y distintas relaciones de aspecto.

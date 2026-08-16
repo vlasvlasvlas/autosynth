@@ -80,10 +80,10 @@ export class InputHandler {
 
   /** @param {KeyboardEvent} e */
   _onKeyUp(e) {
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-      this._shift = false;
-    }
     this._down.delete(e.code);
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      this._shift = this._down.has('ShiftLeft') || this._down.has('ShiftRight');
+    }
     this._released.add(e.code);
   }
 
@@ -155,10 +155,10 @@ export class InputHandler {
   /** @returns {boolean} Moving right — false when Shift is held (Shift+Arrow = jump) */
   get right() { return !this._shift && this.isDown('ArrowRight'); }
 
-  /** @returns {boolean} Jump left one lane — first frame of Shift+ArrowLeft only */
+  /** @returns {boolean} Jump left two lanes — first frame only */
   get jumpLeft() { return this._shift && this.wasPressed('ArrowLeft'); }
 
-  /** @returns {boolean} Jump right one lane — first frame of Shift+ArrowRight only */
+  /** @returns {boolean} Jump right two lanes — first frame only */
   get jumpRight() { return this._shift && this.wasPressed('ArrowRight'); }
 
   /** @returns {boolean} DROP action (place/remove event) — first frame only */
@@ -172,14 +172,27 @@ export class InputHandler {
 
   /** @returns {boolean} Pause/Menu — first frame only */
   get pause() { return this.wasPressed('Escape') || this.wasPressed('KeyM') || this.wasPressed('KeyP'); }
+
+  /** @returns {boolean} Erase mode held down */
+  get erase() { return this.isDown('Backspace') || this.isDown('Delete') || this.isDown('KeyX'); }
+
+  /** @returns {number|null} The digit (0-9) pressed this frame, or null if none */
+  get digitPressed() {
+    for (let i = 0; i <= 9; i++) {
+      if (this.wasPressed(`Digit${i}`)) return i;
+    }
+    return null;
+  }
 }
 
 /**
- * Set of key codes that should have their default browser behavior prevented.
- * @type {Set<string>}
+ * The whitelist of keys that prevent default browser behavior
  */
 InputHandler.GAME_KEYS = new Set([
   'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
   'Space', 'KeyD', 'Escape', 'KeyM', 'KeyP',
-  'ShiftLeft', 'ShiftRight'
+  'ShiftLeft', 'ShiftRight',
+  'Backspace', 'Delete', 'KeyX',
+  'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4',
+  'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9'
 ]);

@@ -9,7 +9,8 @@ export class Sequencer {
   }
 
   quantize(position) {
-    const unit = this.grid.mpb / this.grid.subdivisions;
+    const steps = this.grid.steps || 128;
+    const unit = this.trackLength / steps;
     const value = this.grid.quantize ? Math.round(position / unit) * unit : position;
     return ((value % this.trackLength) + this.trackLength) % this.trackLength;
   }
@@ -31,14 +32,27 @@ export class Sequencer {
     return this.lastDrop;
   }
 
-  crossed(from, to, wrapped) {
+  crossed(from, to, wrapped, isReverse = false) {
     const result = [];
     for (const event of this.events.values()) {
-      const hit = wrapped
-        ? event.position > from || event.position <= to
-        : event.position > from && event.position <= to;
+      const hit = isReverse
+        ? (wrapped
+          ? event.position < from || event.position >= to
+          : event.position < from && event.position >= to)
+        : (wrapped
+          ? event.position > from || event.position <= to
+          : event.position > from && event.position <= to);
       if (hit) result.push(event);
     }
+    result.sort((a, b) => {
+      const distanceA = isReverse
+        ? (from - a.position + this.trackLength) % this.trackLength
+        : (a.position - from + this.trackLength) % this.trackLength;
+      const distanceB = isReverse
+        ? (from - b.position + this.trackLength) % this.trackLength
+        : (b.position - from + this.trackLength) % this.trackLength;
+      return distanceA - distanceB;
+    });
     return result;
   }
 

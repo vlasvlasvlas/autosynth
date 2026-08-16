@@ -1,5 +1,7 @@
 # OUTSYNTH
 
+> Este archivo conserva el fundamento conceptual y la historia de decisiones. Para el estado real del runtime v0.3, ver `PROJECT_STATUS.md`; para la arquitectura vigente, ver `ARCHITECTURE.md`.
+
 ## Documento conceptual y fundamento del MVP
 
 **Estado:** concepto consolidado; MVP local implementado.  

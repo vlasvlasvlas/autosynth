@@ -8,7 +8,7 @@
 //   const theme = new ThemeEngine(configLoader);
 //   theme.sky()        → { top: '#050508', bottom: '#12121e' }
 //   theme.laneColor(0) → '#ff3366'
-//   theme.sprite('kick') → { shape: 'monolith', glow: true, ... }
+//   theme.sprite('kick') → { shape: 'floor_block', scale: 1 }
 
 export class ThemeEngine {
   /**
@@ -72,7 +72,7 @@ export class ThemeEngine {
    * @returns {string} Hex color
    */
   laneColor(index) {
-    const colors = this._theme.lanes?.colors || ['#ff3366', '#33ffcc', '#ffcc33', '#7c4dff'];
+    const colors = this._theme.lanes?.colors || Array(6).fill('#ffffff');
     return colors[index % colors.length];
   }
 
@@ -81,7 +81,7 @@ export class ThemeEngine {
    * @returns {string[]}
    */
   laneColors() {
-    return this._theme.lanes?.colors || ['#ff3366', '#33ffcc', '#ffcc33', '#7c4dff'];
+    return this._theme.lanes?.colors || Array(6).fill('#ffffff');
   }
 
   // ---- Sprites ----
@@ -93,7 +93,7 @@ export class ThemeEngine {
    */
   sprite(type) {
     const defaults = {
-      shape: 'pillar',
+      shape: 'floor_line',
       glow: false,
       pulse_on_trigger: false,
       blink_on_trigger: false,

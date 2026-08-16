@@ -2,8 +2,7 @@ outsynth:
   version: "0.3.0"
 
   grid:
-    mpb: 4
-    subdivisions: 4
+    steps: 128
     quantize: true
 
   lanes:
@@ -12,9 +11,10 @@ outsynth:
     width: 160
 
   vehicle:
-    max_speed: 300
-    acceleration: 140
-    deceleration: 220
+    max_speed: 4167
+    reverse_max_speed: 4167
+    acceleration: 60
+    deceleration: 120
     lateral_speed: 750
     inertia: 0.98
 

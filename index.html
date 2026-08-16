@@ -42,6 +42,7 @@
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           window._outsynthAccentColor = btn.dataset.color;
+          window.dispatchEvent(new CustomEvent('outsynth-accent-change', { detail: { color: btn.dataset.color } }));
           document.querySelectorAll('.accent-swatch').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
         });

@@ -6,9 +6,10 @@
 // IBM Plex Mono throughout. No per-track colours.
 
 export class SoundMenu {
-  constructor(audioEngine, themeEngine, onResume) {
+  constructor(audioEngine, themeEngine, sequencer, onResume) {
     this.audio = audioEngine;
     this.theme = themeEngine;
+    this.sequencer = sequencer;
     this.onResume = onResume;
     this.container = null;
     this.isOpen = false;
@@ -67,6 +68,11 @@ export class SoundMenu {
             ${SCALE_TYPES.map(s => `<option value="${s.id}" ${s.id === scaleType ? 'selected' : ''}>${s.name}</option>`).join('')}
           </select>
           <span class="scale-preview" id="scale-preview">${noteNames.join(' · ')}</span>
+
+          <span class="scale-label" style="margin-left: auto;">GRID STEPS</span>
+          <select id="grid-steps">
+            ${[16, 32, 64, 128, 256].map(s => `<option value="${s}" ${s === (this.sequencer.grid.steps || 128) ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
         </div>
 
         <div class="tracks-grid">
@@ -99,6 +105,27 @@ export class SoundMenu {
               </div>
             `;
           }).join('')}
+          
+          <div class="track-card" style="border-color: ${this.theme.accentColor}55;">
+            <div class="track-card-header">
+              <span class="track-badge" style="background: ${this.theme.accentColor}; color: #000;">DRIVE</span>
+              <h3 class="track-name" style="color: ${this.theme.accentColor};">SYNTHESIS</h3>
+            </div>
+            <div class="control-group">
+              <div class="slider-header">
+                <label style="color: ${this.theme.accentColor};">VOL</label>
+                <span class="val-display" id="drive-vol-val" style="color: ${this.theme.accentColor};">${Math.round(this.audio.driveSettings.volume * 100)}%</span>
+              </div>
+              <input type="range" id="drive-vol-slider" min="0" max="1" step="0.05" value="${this.audio.driveSettings.volume}">
+            </div>
+            <div class="control-group">
+              <label style="color: ${this.theme.accentColor};">MODULE TIMBRE</label>
+              <select id="drive-preset" style="border-color: ${this.theme.accentColor};">
+                ${this.audio.drivePresets.map(p => `<option value="${p.id}" ${p.id === this.audio.currentDrivePresetId ? 'selected' : ''}>${p.name}</option>`).join('')}
+              </select>
+            </div>
+            <button id="test-drive-btn" style="width: 100%; margin-top: auto; background: transparent; border: 1px solid ${this.theme.accentColor}55; color: ${this.theme.accentColor}; padding: 0.5rem; font: inherit; cursor: pointer;">[HOLD] TO TEST</button>
+          </div>
         </div>
 
         <div class="menu-footer">
@@ -136,6 +163,49 @@ export class SoundMenu {
     };
     if (scaleRoot) scaleRoot.onchange = updateScale;
     if (scaleTypeEl) scaleTypeEl.onchange = updateScale;
+
+    // Grid Steps selector
+    const gridStepsEl = this.container.querySelector('#grid-steps');
+    if (gridStepsEl) {
+      gridStepsEl.onchange = (e) => {
+        this.sequencer.grid.steps = parseInt(e.target.value, 10);
+      };
+    }
+
+    // Drive Timbre selector
+    const drivePresetEl = this.container.querySelector('#drive-preset');
+    if (drivePresetEl) {
+      drivePresetEl.onchange = (e) => {
+        this.audio.setDrivePreset(e.target.value);
+      };
+    }
+    
+    // Drive Volume Slider
+    const driveVolSlider = this.container.querySelector('#drive-vol-slider');
+    if (driveVolSlider) {
+      driveVolSlider.oninput = (e) => {
+        const val = parseFloat(e.target.value);
+        this.audio.setDriveVolume(val);
+        const disp = this.container.querySelector('#drive-vol-val');
+        if (disp) disp.innerText = `${Math.round(val * 100)}%`;
+      };
+    }
+
+    // Drive Test Button
+    const testDriveBtn = this.container.querySelector('#test-drive-btn');
+    if (testDriveBtn) {
+      const startDrive = () => {
+        this.audio.start();
+        if (!this.audio.driveMode) this.audio.toggleDriveMode();
+        this.audio.triggerDriveSustain(0);
+      };
+      const stopDrive = () => {
+        this.audio.stopDriveSustain();
+      };
+      testDriveBtn.onmousedown = startDrive;
+      testDriveBtn.onmouseup = stopDrive;
+      testDriveBtn.onmouseleave = stopDrive;
+    }
 
     // Channel volume sliders
     this.container.querySelectorAll('.vol-slider').forEach(slider => {

@@ -136,7 +136,7 @@ export class ConfigLoader {
    * @returns {string[]} Array of hex color strings
    */
   laneColors() {
-    return this.theme().lanes?.colors || ['#ff3366', '#33ffcc', '#ffcc33', '#7c4dff'];
+    return this.theme().lanes?.colors || Array(6).fill('#ffffff');
   }
 
   /**
@@ -144,7 +144,7 @@ export class ConfigLoader {
    * @returns {number}
    */
   laneCount() {
-    return this.get('outsynth.lanes.count', 4);
+    return this.get('outsynth.lanes.count', 6);
   }
 
   /**
@@ -166,10 +166,12 @@ export class ConfigLoader {
   vehiclePhysics() {
     return {
       maxSpeed:      this.get('outsynth.vehicle.max_speed', 300),
+      reverseMaxSpeed: this.get('outsynth.vehicle.reverse_max_speed', 150),
       acceleration:  this.get('outsynth.vehicle.acceleration', 120),
       deceleration:  this.get('outsynth.vehicle.deceleration', 200),
       lateralSpeed:  this.get('outsynth.vehicle.lateral_speed', 400),
       inertia:       this.get('outsynth.vehicle.inertia', 0.98),
+      laneSnap:      this.get('outsynth.lanes.snap_strength', 0.15),
     };
   }
 }
