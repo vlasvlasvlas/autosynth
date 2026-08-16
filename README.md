@@ -18,9 +18,9 @@ La longitud de la pista equivale a **8 compases de 4/4 (32 beats)**.
 ## 🎮 Controles
 
 ### Conducción
-- `W` / `Flecha Arriba`: Acelerar (Aumentar BPM).
-- `S` / `Flecha Abajo`: Frenar / Reversa (Disminuir BPM).
-- `A` / `D` o `Izquierda` / `Derecha`: Cambiar de carril. Hay 6 carriles, cada uno asignado a un instrumento.
+- `Flecha Arriba`: Acelerar (Aumentar BPM).
+- `Flecha Abajo`: Frenar / Reversa (Disminuir BPM).
+- `Izquierda` / `Derecha`: Cambiar de carril. Hay 6 carriles, cada uno asignado a un instrumento.
 - `Shift` + `Izquierda` / `Derecha`: Salto rápido de 2 carriles.
 
 ### Secuenciador (Modo WRITE)
