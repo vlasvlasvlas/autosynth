@@ -88,6 +88,11 @@ class Game {
     document.getElementById('close-help-btn')?.addEventListener('click', () => {
       document.getElementById('help-modal')?.classList.add('hidden');
     });
+    document.getElementById('help-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'help-modal') {
+        e.target.classList.add('hidden');
+      }
+    });
 
     this.state = State.START_SCREEN;
     this._startFadeStarted = false;
@@ -136,11 +141,16 @@ class Game {
         }
       }
     } else if (this.state === State.PLAYING) {
-      // Check pause / open sound menu
+      // Check pause / open sound menu or close help
       if (this.input.pause) {
-        this.audio.stopDriveSustain();
-        this.state = State.PAUSED;
-        this.soundMenu.open();
+        const helpModal = document.getElementById('help-modal');
+        if (helpModal && !helpModal.classList.contains('hidden')) {
+          helpModal.classList.add('hidden');
+        } else {
+          this.audio.stopDriveSustain();
+          this.state = State.PAUSED;
+          this.soundMenu.open();
+        }
       } else {
         this._update(dt);
         this.renderer.render({
