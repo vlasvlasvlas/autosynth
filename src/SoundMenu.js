@@ -47,7 +47,7 @@ export class SoundMenu {
       <div class="menu-window">
         <div class="menu-header">
           <div>
-            <h2 class="menu-title">OUTSYNTH // SOUND STUDIO</h2>
+            <h2 class="menu-title">AUTOSYNTH // SOUND STUDIO</h2>
           </div>
           <div class="header-actions">
             <div class="master-vol-control">

@@ -1,5 +1,5 @@
 {
-  "name": "outsynth",
+  "name": "autosynth",
   "version": "0.3.0",
   "description": "Spatial music sequencer as pseudo-3D driving experience",
   "private": true,
